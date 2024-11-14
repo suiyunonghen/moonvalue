@@ -169,7 +169,7 @@ pub fn BigEndian::uint64Bytes(v: UInt64)->Bytes{
   result
 }
 
-pub(open) trait IBinary{
+pub(open) trait IBinary: Show{
   length(Self)->Int  
   writeByte(Self,Int,Byte)->Unit
   readByte(Self,Int)->Byte
