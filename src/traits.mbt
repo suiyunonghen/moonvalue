@@ -244,154 +244,31 @@ pub fn BigEndian::uint64Bytes(v : UInt64) -> Bytes {
 
 pub(open) trait IBinary: Show {
   length(Self) -> Int
-  writeByte(Self, Int, Byte) -> Unit
-  readByte(Self, Int) -> Byte
-  writeBool(Self, Int, Bool) -> Unit
-  readBool(Self, Int) -> Bool
-  writeBytes(Self, Int, Bytes) -> Unit
-  writeInt16(Self, Int, Int, Bool) -> Unit
-  writeInt32(Self, Int, Int, Bool) -> Unit
-  writeInt64(Self, Int, Int64, Bool) -> Unit
-  readInt16(Self, Int, Bool) -> Int
-  readInt32(Self, Int, Bool) -> Int
-  readInt64(Self, Int, Bool) -> Int64
-  copyFrom(Self, Int, IBinary, Int, Int) -> Unit
-  blit(Self, Int, Bytes, Int, Int) -> Unit
+  write_byte(Self, Int, Byte) -> Unit
+  read_byte(Self, Int) -> Byte
+  write_bool(Self, Int, Bool) -> Unit
+  read_bool(Self, Int) -> Bool
+  write_bytes(Self, Int, Bytes) -> Unit
+  write_int16(Self, Int, Int, Bool) -> Unit
+  write_int32(Self, Int, Int, Bool) -> Unit
+  write_int64(Self, Int, Int64, Bool) -> Unit
+  read_int16(Self, Int, Bool) -> Int
+  read_int32(Self, Int, Bool) -> Int
+  read_int64(Self, Int, Bool) -> Int64
+  read_float(Self,Int)->Float
+  read_double(Self,Int)->Double    
+  read_utf8(Self,Int,Int)->IString!ConvertError
 }
 
-impl IBinary with blit(
+pub(open) trait ICopy: IBinary{
+  copy_from(Self, Int, Self, Int, Int) -> Unit
+  blit(Self, Int, Self, Int, Int) -> Unit
+}
+
+impl ICopy with copy_from(
   self,
   offset : Int,
-  src : Bytes,
-  srcFrom : Int,
-  cpyLen : Int
-) -> Unit {
-  self.copyFrom(offset, src, srcFrom, cpyLen)
-}
-
-pub fn op_get(self : IBinary, offset : Int) -> Byte {
-  let size = self.length()
-  if offset >= size {
-    panic()
-  }
-  self.readByte(offset)
-}
-
-pub fn op_set(self : IBinary, offset : Int, v : Byte) -> Unit {
-  let size = self.length()
-  if offset >= size {
-    panic()
-  }
-  self.writeByte(offset, v)
-}
-
-impl IBinary with writeBytes(self, offset : Int, b : Bytes) -> Unit {
-  let mut idx = offset
-  for v in b {
-    self.writeByte(idx, v)
-    idx = idx + 1
-  }
-}
-
-impl IBinary with writeInt16(
-  self,
-  offset : Int,
-  value : Int,
-  littleEndian : Bool
-) -> Unit {
-  let bytes = if littleEndian {
-    LittleEndian::uint16Bytes(value.reinterpret_as_uint())
-  } else {
-    BigEndian::uint16Bytes(value.reinterpret_as_uint())
-  }
-  self.writeBytes(offset, bytes)
-}
-
-impl IBinary with writeInt32(
-  self,
-  offset : Int,
-  value : Int,
-  littleEndian : Bool
-) -> Unit {
-  let bytes = if littleEndian {
-    LittleEndian::uint32Bytes(value.reinterpret_as_uint())
-  } else {
-    BigEndian::uint32Bytes(value.reinterpret_as_uint())
-  }
-  self.writeBytes(offset, bytes)
-}
-
-impl IBinary with writeInt64(
-  self,
-  offset : Int,
-  value : Int64,
-  littleEndian : Bool
-) -> Unit {
-  let bytes = if littleEndian {
-    LittleEndian::uint64Bytes(value.reinterpret_as_uint64())
-  } else {
-    BigEndian::uint64Bytes(value.reinterpret_as_uint64())
-  }
-  self.writeBytes(offset, bytes)
-}
-
-impl IBinary with readInt16(self, offset : Int, littleEndian : Bool) -> Int {
-  let bytes : Array[Byte] = [self.readByte(offset), self.readByte(offset + 1)]
-  if littleEndian {
-    LittleEndian::uint16(bytes[:]).reinterpret_as_int()
-  } else {
-    BigEndian::uint16(bytes[:]).reinterpret_as_int()
-  }
-}
-
-impl IBinary with readInt32(self, offset : Int, littleEndian : Bool) -> Int {
-  let bytes : Array[Byte] = [
-    self.readByte(offset),
-    self.readByte(offset + 1),
-    self.readByte(offset + 2),
-    self.readByte(offset + 3),
-  ]
-  if littleEndian {
-    LittleEndian::uint32(bytes[:]).reinterpret_as_int()
-  } else {
-    BigEndian::uint32(bytes[:]).reinterpret_as_int()
-  }
-}
-
-impl IBinary with readInt64(self, offset : Int, littleEndian : Bool) -> Int64 {
-  let bytes : Array[Byte] = [
-    self.readByte(offset),
-    self.readByte(offset + 1),
-    self.readByte(offset + 2),
-    self.readByte(offset + 3),
-    self.readByte(offset + 4),
-    self.readByte(offset + 5),
-    self.readByte(offset + 6),
-    self.readByte(offset + 7),
-  ]
-  if littleEndian {
-    LittleEndian::uint64(bytes[:]).reinterpret_as_int64()
-  } else {
-    BigEndian::uint64(bytes[:]).reinterpret_as_int64()
-  }
-}
-
-impl IBinary with readBool(self, offset : Int) -> Bool {
-  self.readByte(offset) == 1
-}
-
-impl IBinary with writeBool(self, offset : Int, value : Bool) -> Unit {
-  if value {
-    self.writeByte(offset, 1)
-  } else {
-    self.writeByte(offset, 0)
-  }
-}
-
-impl IBinary with copyFrom(
-  self,
-  offset : Int,
-  src : IBinary,
+  src : Self,
   srcFrom : Int,
   cpyLen : Int
 ) -> Unit {
@@ -403,21 +280,171 @@ impl IBinary with copyFrom(
     leftLen = cpyLen
   }
   for i = 0; i < leftLen; i = i + 1 {
-    self.writeByte(offset + i, src.readByte(srcFrom + i))
+    self.write_byte(offset + i, src.read_byte(srcFrom + i))
+  }
+}
+
+impl ICopy with blit(
+  self,
+  offset : Int,
+  src : Self,
+  srcFrom : Int,
+  cpyLen : Int
+) -> Unit {
+  self.copy_from(offset, src, srcFrom, cpyLen)
+}
+
+pub fn op_get(self : IBinary, offset : Int) -> Byte {
+  let size = self.length()
+  if offset >= size {
+    panic()
+  }
+  self.read_byte(offset)
+}
+
+pub fn op_set(self : IBinary, offset : Int, v : Byte) -> Unit {
+  let size = self.length()
+  if offset >= size {
+    panic()
+  }
+  self.write_byte(offset, v)
+}
+
+
+
+impl IBinary with read_float(self,offset: Int)->Float{
+  self.read_int32(offset,false).reinterpret_as_float()
+}
+
+impl IBinary with read_double(self,offset: Int)->Double{
+  self.read_int64(offset,false).reinterpret_as_double()
+}
+
+impl IBinary with write_bytes(self, offset : Int, b : Bytes) -> Unit {
+  let mut idx = offset
+  for v in b {
+    self.write_byte(idx, v)
+    idx = idx + 1
+  }
+}
+
+impl IBinary with write_int16(
+  self,
+  offset : Int,
+  value : Int,
+  littleEndian : Bool
+) -> Unit {
+  let bytes = if littleEndian {
+    LittleEndian::uint16Bytes(value.reinterpret_as_uint())
+  } else {
+    BigEndian::uint16Bytes(value.reinterpret_as_uint())
+  }
+  self.write_bytes(offset, bytes)
+}
+
+impl IBinary with write_int32(
+  self,
+  offset : Int,
+  value : Int,
+  littleEndian : Bool
+) -> Unit {
+  let bytes = if littleEndian {
+    LittleEndian::uint32Bytes(value.reinterpret_as_uint())
+  } else {
+    BigEndian::uint32Bytes(value.reinterpret_as_uint())
+  }
+  println(bytes)
+  self.write_bytes(offset, bytes)
+}
+
+impl IBinary with write_int64(
+  self,
+  offset : Int,
+  value : Int64,
+  littleEndian : Bool
+) -> Unit {
+  let bytes = if littleEndian {
+    LittleEndian::uint64Bytes(value.reinterpret_as_uint64())
+  } else {
+    BigEndian::uint64Bytes(value.reinterpret_as_uint64())
+  }
+  self.write_bytes(offset, bytes)
+}
+
+impl IBinary with read_int16(self, offset : Int, littleEndian : Bool) -> Int {
+  let bytes : Array[Byte] = [self.read_byte(offset), self.read_byte(offset + 1)]
+  if littleEndian {
+    LittleEndian::uint16(bytes[:]).reinterpret_as_int()
+  } else {
+    BigEndian::uint16(bytes[:]).reinterpret_as_int()
+  }
+}
+
+impl IBinary with read_int32(self, offset : Int, littleEndian : Bool) -> Int {
+  let bytes : Array[Byte] = [
+    self.read_byte(offset),
+    self.read_byte(offset + 1),
+    self.read_byte(offset + 2),
+    self.read_byte(offset + 3),
+  ]
+  if littleEndian {
+    LittleEndian::uint32(bytes[:]).reinterpret_as_int()
+  } else {
+    BigEndian::uint32(bytes[:]).reinterpret_as_int()
+  }
+}
+
+impl IBinary with read_int64(self, offset : Int, littleEndian : Bool) -> Int64 {
+  let bytes : Array[Byte] = [
+    self.read_byte(offset),
+    self.read_byte(offset + 1),
+    self.read_byte(offset + 2),
+    self.read_byte(offset + 3),
+    self.read_byte(offset + 4),
+    self.read_byte(offset + 5),
+    self.read_byte(offset + 6),
+    self.read_byte(offset + 7),
+  ]
+  if littleEndian {
+    LittleEndian::uint64(bytes[:]).reinterpret_as_int64()
+  } else {
+    BigEndian::uint64(bytes[:]).reinterpret_as_int64()
+  }
+}
+
+impl IBinary with read_bool(self, offset : Int) -> Bool {
+  self.read_byte(offset) == 1
+}
+
+impl IBinary with write_bool(self, offset : Int, value : Bool) -> Unit {
+  if value {
+    self.write_byte(offset, 1)
+  } else {
+    self.write_byte(offset, 0)
   }
 }
 
 pub impl IBinary for Bytes with length(self) -> Int { self.length() }
 
-pub impl IBinary for Bytes with writeByte(self, offset : Int, value : Byte) -> Unit {
+pub impl IBinary for Bytes with write_byte(self, offset : Int, value : Byte) -> Unit {
   self[offset] = value
 }
 
-pub impl IBinary for Bytes with readByte(self, offset : Int) -> Byte {
+pub impl IBinary for Bytes with read_byte(self, offset : Int) -> Byte {
   self[offset]
 }
 
-pub impl IBinary for Bytes with blit(
+pub impl ICopy for Bytes with blit(
+  self,
+  offset : Int,
+  src : Bytes,
+  srcFrom : Int,
+  cpyLen : Int
+) -> Unit {
+  self.blit(offset, src, srcFrom, cpyLen)
+}
+
+pub impl ICopy for Bytes with copy_from(
   self,
   offset : Int,
   src : Bytes,
@@ -431,7 +458,7 @@ pub impl IBinary for @wasmMemManager.Memory with length(self) -> Int {
   self.length
 }
 
-pub impl IBinary for @wasmMemManager.Memory with writeByte(
+pub impl IBinary for @wasmMemManager.Memory with write_byte(
   self,
   offset : Int,
   value : Byte
@@ -439,6 +466,169 @@ pub impl IBinary for @wasmMemManager.Memory with writeByte(
   self.writeByte_unsafe(offset, value.to_int())
 }
 
-pub impl IBinary for @wasmMemManager.Memory with readByte(self, offset : Int) -> Byte {
+pub impl IBinary for @wasmMemManager.Memory with read_byte(self, offset : Int) -> Byte {
   self.readByte_unsafe(offset)
+}
+
+pub impl ICopy for @wasmMemManager.Memory with blit(
+  self,
+  offset : Int,
+  src : @wasmMemManager.Memory,
+  srcFrom : Int,
+  cpyLen : Int
+) -> Unit {
+  self.move_unsafe(offset,src.offset+srcFrom,cpyLen)
+}
+
+pub impl ICopy for @wasmMemManager.Memory with copy_from(
+  self,
+  offset : Int,
+  src : @wasmMemManager.Memory,
+  srcFrom : Int,
+  cpyLen : Int
+) -> Unit {
+  self.move_unsafe(offset,src.offset+srcFrom,cpyLen)
+}
+
+struct BinaryView{
+  _source: IBinary
+  from: Int
+  len: Int
+}derive(Show)
+
+pub fn newBinaryView(src: IBinary,from: Int,len: Int)->BinaryView{
+  {
+    _source: src,
+    from,
+    len
+  }
+}
+
+pub impl IBinary for BinaryView with length(self) -> Int{
+  self.len
+}
+
+pub impl IBinary for BinaryView with write_byte(self, offset: Int,v: Byte) -> Unit{
+  self._source.write_byte(self.from+offset,v) 
+}
+
+pub impl IBinary for BinaryView with read_byte(self, offset: Int) -> Byte{
+  self._source.read_byte(offset+self.from)
+}
+
+pub impl IBinary for BinaryView with write_bool(self,offset: Int,v: Bool) -> Unit{
+  self._source.write_bool(self.from+offset,v)
+}
+
+pub impl IBinary for BinaryView with read_bool(self, offset: Int) -> Bool{
+  self._source.read_bool(self.from+offset)
+}
+pub impl IBinary for BinaryView with write_bytes(self,offset: Int,v: Bytes) -> Unit{
+  self._source.write_bytes(self.from+offset,v)
+}
+pub impl IBinary for BinaryView with write_int16(self,offset : Int,value : Int,littleEndian : Bool) -> Unit{
+  self._source.write_int16(self.from+offset,value,littleEndian)
+}
+pub impl IBinary for BinaryView with write_int32(self,offset : Int,value : Int,littleEndian : Bool) -> Unit{
+  self._source.write_int32(self.from+offset,value,littleEndian)
+}
+pub impl IBinary for BinaryView with write_int64(self,offset : Int,value : Int64,littleEndian: Bool) -> Unit{
+  self._source.write_int64(self.from+offset,value,littleEndian)
+}
+pub impl IBinary for BinaryView with read_int16(self,offset : Int,littleEndian : Bool) -> Int{
+  self._source.read_int16(self.from+offset,littleEndian)
+}
+
+pub impl IBinary for BinaryView with read_int32(self,offset : Int,littleEndian : Bool) -> Int{
+  self._source.read_int32(self.from+offset,littleEndian)
+}
+pub impl IBinary for BinaryView with read_int64(self,offset : Int,littleEndian : Bool) -> Int64{
+  self._source.read_int64(self.from+offset,littleEndian)
+}
+pub impl IBinary for BinaryView with read_float(self,offset: Int)->Float{
+  self._source.read_float(self.from+offset)
+}
+
+pub impl IBinary for BinaryView with read_double(self,offset: Int)->Double{
+  self._source.read_double(self.from+offset)
+}
+
+// pub impl ICopy for BinaryView with copy_from(self,   offset : Int,
+//   src : BinaryView,
+//   srcFrom : Int,
+//   cpyLen : Int) -> Unit{
+//   self._source.copy_from(self.from+offset,src._source,srcFrom,cpyLen)  
+// }
+
+// pub impl ICopy for BinaryView with blit(self,
+//   offset : Int,
+//   src : BinaryView,
+//   srcFrom : Int,
+//   cpyLen : Int) -> Unit{
+//   self._source.blit(self.from+offset,src,srcFrom,cpyLen)
+// }
+
+pub impl IBinary for BinaryView with read_utf8(self,offset: Int,l: Int)->IString!ConvertError{
+  self._source.read_utf8!(self.from+offset,l)
+}
+
+struct StringView{
+  _source: IBinary
+  from: Int
+  len: Int
+  mut _str: IString?
+}
+
+pub fn StringView::newStringView(source: IBinary,from: Int,len: Int)->StringView{
+  {
+    _source: source,
+    from,
+    len,
+    _str: None
+  }
+}
+
+pub impl IString for StringView with charCodeAt(self, index: Int) -> Int {
+  match self._str{
+    Some(v)=>v.charCodeAt(index)
+    _=>{
+      match self._source.read_utf8?(self.from,self.len){
+        Ok(str)=>{
+          self._str = Some(str)
+          str.charCodeAt(index)
+        }
+        Err(ConvertError(_))=>-1
+      }
+    }
+  }
+}
+  
+pub impl IString for StringView with length(self) -> Int{
+  match self._str{
+    Some(v)=>v.length()
+    _=>{
+      match self._source.read_utf8?(self.from,self.len){
+        Ok(str)=>{
+          self._str = Some(str)
+          str.length()
+        }
+        Err(ConvertError(_))=>-1
+      }
+    }
+  }
+}
+  
+pub impl IString for StringView with to_string(self) -> String{
+  match self._str{
+    Some(v)=>v.to_string()
+    _=>{
+      match self._source.read_utf8?(self.from,self.len){
+        Ok(str)=>{
+          self._str = Some(str)
+          str.to_string()
+        }
+        Err(ConvertError(_))=>""
+      }
+    }
+  }
 }

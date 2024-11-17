@@ -1,6 +1,5 @@
 {
-  "import": [
-    "suiyunonghen/linklist",
+  "import": [    
     "suiyunonghen/wasmMemManager"    
   ]  
 }
