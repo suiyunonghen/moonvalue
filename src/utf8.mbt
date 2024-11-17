@@ -69,10 +69,10 @@ pub fn utf8_utf16(utf8Arr : ArrayView[Byte]) -> String!ConvertError {
   String::from_array(strArr)
 }
 
-impl IBinary with read_utf8(self,offset: Int,l: Int)->IString!ConvertError{
+impl IBinary with read_utf8(self, offset : Int, l : Int) -> IString!ConvertError {
   let strArr : Array[Char] = Array::new()
   let mut idx = offset
-  while idx < l {    
+  while idx < l {
     let code = self.read_byte(idx).to_int()
     if (code & 0x80) == 0 {
       strArr.push(Char::from_int(code))
