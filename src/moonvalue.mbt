@@ -4,6 +4,7 @@ pub(all) enum ValueData {
   VT_False
   VT_Int(value~ : Int64)
   VT_Double(value~ : Double)
+  VT_DateTime(value~ : @datetime.DateTime)
   VT_Float(value~ : Float)
   VT_String(value~ : IString)
   VT_Bin(value~ : IBinary)
@@ -188,6 +189,21 @@ pub fn set_key_bin(self : MoonValue, key : IString, v : IBinary) -> Unit {
   }
 }
 
+pub fn set_key_datetime(
+  self : MoonValue,
+  key : IString,
+  v : @datetime.DateTime
+) -> Unit {
+  match self.data {
+    VT_Obj(value~) =>
+      match value[key] {
+        Some(vdata) => vdata.data = VT_DateTime(value=v)
+        None => value[key] = { parent: Some(self), data: VT_DateTime(value=v) }
+      }
+    _ => ()
+  }
+}
+
 pub fn set_key_ext(
   self : MoonValue,
   key : IString,
@@ -256,6 +272,21 @@ pub fn set_intkey_bin(self : MoonValue, key : Int64, v : IBinary) -> Unit {
       match value[key] {
         Some(vdata) => vdata.data = VT_Bin(value=v)
         None => value[key] = { parent: Some(self), data: VT_Bin(value=v) }
+      }
+    _ => ()
+  }
+}
+
+pub fn set_intkey_datetime(
+  self : MoonValue,
+  key : Int64,
+  v : @datetime.DateTime
+) -> Unit {
+  match self.data {
+    VT_IntKeyObj(value~) =>
+      match value[key] {
+        Some(vdata) => vdata.data = VT_DateTime(value=v)
+        None => value[key] = { parent: Some(self), data: VT_DateTime(value=v) }
       }
     _ => ()
   }
@@ -636,6 +667,7 @@ pub fn add_arr_object(self : MoonValue, valueType : CompValueType) -> MoonValue 
           return result
         }
       }
+    _ => ()
   }
   let arr : Array[MoonValue] = []
   let result = {
@@ -670,6 +702,22 @@ pub fn set_index_bin(self : MoonValue, index : Int, v : IBinary) -> Unit {
         arr[index].data = VT_Bin(value=v)
       } else {
         arr.push({ parent: Some(self), data: VT_Bin(value=v) })
+      }
+    _ => ()
+  }
+}
+
+pub fn set_index_date(
+  self : MoonValue,
+  index : Int,
+  v : @datetime.DateTime
+) -> Unit {
+  match self.data {
+    VT_Array(value=arr) =>
+      if index >= 0 && index < arr.length() {
+        arr[index].data = VT_DateTime(value=v)
+      } else {
+        arr.push({ parent: Some(self), data: VT_DateTime(value=v) })
       }
     _ => ()
   }
@@ -782,6 +830,8 @@ pub fn to_string(self : MoonValue) -> String {
     VT_Float(value=v) => v.to_string()
     VT_String(value=v) => v.to_string()
     VT_Bin(value=v) => v.to_string()
+    VT_Ext(value=_, extType=_) => ""
+    VT_DateTime(value=v) => Show::to_string(v)
     VT_Obj(value=obj) => {
       let builder : StringBuilder = StringBuilder::new()
       let mulSpace = self.level()

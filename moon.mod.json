@@ -1,14 +1,18 @@
 {
   "name": "suiyunonghen/moonvalue",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "deps": {
-    "suiyunonghen/linklist": "0.1.4",
-    "suiyunonghen/wasmMemManager": "0.1.0"
+    "suiyunonghen/wasmMemManager": "0.1.0",
+    "suiyunonghen/datetime": "0.1.1"
   },
   "readme": "README.md",
   "repository": "https://github.com/suiyunonghen/moonvalue",
   "license": "Apache-2.0",
-  "keywords": ["msgpack","bson","moonValue"],
+  "keywords": [
+    "msgpack",
+    "bson",
+    "moonValue"
+  ],
   "description": "moonbitlang实现的msgpack,bson库",
   "source": "src"
 }

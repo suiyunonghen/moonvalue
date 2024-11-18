@@ -44,6 +44,10 @@ priv struct MsgPackParser {
   mut _offset : Int
 }
 
+fn MsgPackParser::new(shareBinary : Bool, binary : IBinary) -> MsgPackParser {
+  { _packData: binary, shareBinary, _offset: 0 }
+}
+
 fn detectionFmtCode(self : MsgPackParser) -> MsgPackFormatCode {
   let formatCode = self._packData.read_byte(self._offset)
   self._offset += 1
@@ -105,10 +109,6 @@ fn detectionFmtCode(self : MsgPackParser) -> MsgPackFormatCode {
   }
 }
 
-fn parse_map(self : MsgPackParser, parent : MoonValue, mapLen : UInt) -> Unit {
-
-}
-
 fn parse_u8(self : MsgPackParser) -> Int {
   let result = self._packData.read_byte(self._offset).to_int()
   self._offset += 1
@@ -168,12 +168,11 @@ fn parse_double(self : MsgPackParser) -> Double {
 }
 
 fn parser(self : MsgPackParser) -> MoonValue!MsgPackParserError {
-  self.parse_value!(self.detectionFmtCode(), None, KeyInfo::None)
+  self.parse_value!(self.detectionFmtCode(), None, KeyInfo::NoKey_or_Array)
 }
 
 enum KeyInfo {
-  None
-  Array
+  NoKey_or_Array
   Str(IString)
   IntKey(Int64)
 }
@@ -182,6 +181,39 @@ pub(all) type! MsgPackParserError {
   InvalidateMsgPackMapType(String)
   ErrorUtf8String(String)
   ErrorExtError(String)
+  ErrorKey(String)
+  ErrorIntKey(String)
+}
+
+fn parse_key(self : MsgPackParser) -> IString!MsgPackParserError {
+  let code = self.detectionFmtCode()
+  match code {
+    FmtCodeFixStr(len=strLen)
+    | FmtCodeStr8(len=strLen)
+    | FmtCodeStr16(len=strLen) | FmtCodeStr32(len=strLen) => {
+      let strLen = strLen.reinterpret_as_int()
+      match self._packData.read_utf8?(self._offset, strLen) {
+        Err(ConvertError(str)) => raise ErrorUtf8String(str)
+        Ok(value) => value
+      }
+    }
+    _ => raise ErrorKey("invalidate map key code")
+  }
+}
+
+fn parse_intKey(self : MsgPackParser) -> Int64!MsgPackParserError {
+  let code = self.detectionFmtCode()
+  match code {
+    FmtCodeUInt8(value=vInt)
+    | FmtCodeUInt32(value=vInt) | FmtCodeUInt16(value=vInt) => vInt.to_int64()
+    FmtCodeInt8(value=vInt)
+    | FmtCodeFixInt(value=vInt)
+    | FmtCodeNegFixInt(value=vInt)
+    | FmtCodeInt32(value=vInt) | FmtCodeInt16(value=vInt) => vInt.to_int64()
+    FmtCodeUInt64(value=vInt) => vInt.reinterpret_as_int64()
+    FmtCodeInt64(value=vInt) => vInt
+    _ => raise ErrorIntKey("invalidate int map key code")
+  }
 }
 
 fn parse_value(
@@ -197,22 +229,32 @@ fn parse_value(
       let code = self._packData.read_byte(self._offset)
       let result = if (code >= 0xd9 && code <= 0xdb) ||
         (code >= 0xa0 && code <= 0xbf) {
-        match parent {
+        let strMap = match parent {
           Some(p) =>
             match key {
               Str(keyStr) => p.add_key_object(keyStr, StrMap)
               IntKey(intKey) => p.add_intkey_object(intKey, StrMap)
-              _ => p.add_arr_object(StrMap)
+              NoKey_or_Array => p.add_arr_object(StrMap)
             }
           _ => {
             let v = { parent, data: VT_Obj(value={}) }
             v
           }
         }
+        for i in 0..<mapLen.reinterpret_as_int() {
+          let key = self.parse_key!()
+          let _ = self.parse_value!(
+            self.detectionFmtCode(),
+            Some(strMap),
+            Str(key),
+          )
+
+        }
+        strMap
       } else if (code >= 0xcc && code <= 0xd3) ||
         code <= 0x7f ||
         (code >= 0xe0 && code <= 0xff) {
-        match parent {
+        let intMap = match parent {
           Some(p) =>
             match key {
               Str(keyStr) => p.add_key_object(keyStr, IntMap)
@@ -224,13 +266,22 @@ fn parse_value(
             v
           }
         }
+        for i in 0..<mapLen.reinterpret_as_int() {
+          let key = self.parse_intKey!()
+          let _ = self.parse_value!(
+            self.detectionFmtCode(),
+            Some(intMap),
+            IntKey(key),
+          )
+
+        }
+        intMap
       } else {
         //无效的内容
         raise InvalidateMsgPackMapType(
           "The key of the map can only be integers and strings",
         )
       }
-      self.parse_map(result, mapLen)
       return result
     }
     FmtCodeFixArray(len=arrLen)
@@ -252,7 +303,7 @@ fn parse_value(
           let _ = self.parse_value!(
             self.detectionFmtCode(),
             Some(result),
-            Array,
+            NoKey_or_Array,
           )
           continue i + 1
         }
@@ -372,7 +423,18 @@ fn parse_value(
         //96位日期时间 linux时间戳
         let nsec = self.parse_u32() //纳秒
         let sec = self.parse_u64()
-        //秒
+        let ms = (sec * 1000 + (nsec / 1000000).to_uint64()).reinterpret_as_int64()
+        let date = @datetime.from_unix_mseconds(ms)
+        match parent {
+          Some(p) =>
+            match key {
+              Str(keyStr) => p.set_key_datetime(keyStr, date)
+              IntKey(intKey) => p.set_intkey_datetime(intKey, date)
+              _ => p.set_index_date(-1, date)
+            }
+          _ => ()
+        }
+        return { parent, data: VT_DateTime(value=date) }
       }
       self.parse_ext(parent, key, exType, extLen.reinterpret_as_int())
     }
@@ -444,7 +506,17 @@ fn parse_value(
       if extype == -1 {
         //32位时间,就是Unix 1970-1-1经过的秒数
         let sec = self.parse_u32()
-
+        let date = @datetime.from_unix_mseconds(sec.to_int64() * 1000)
+        match parent {
+          Some(p) =>
+            match key {
+              Str(keyStr) => p.set_key_datetime(keyStr, date)
+              IntKey(intKey) => p.set_intkey_datetime(intKey, date)
+              _ => p.set_index_date(-1, date)
+            }
+          _ => ()
+        }
+        return { parent, data: VT_DateTime(value=date) }
       }
       self.parse_ext(parent, key, extype, 4)
     }
@@ -453,7 +525,19 @@ fn parse_value(
         //64位时间
         let mut sec = self.parse_u64()
         let nsec = sec >> 34 //纳秒
-        sec = sec & 0x00000003ffffffff //秒        
+        sec = sec & 0x00000003ffffffff //秒
+        let ms = (sec * 1000 + nsec / 1000000).reinterpret_as_int64()
+        let date = @datetime.from_unix_mseconds(ms)
+        match parent {
+          Some(p) =>
+            match key {
+              Str(keyStr) => p.set_key_datetime(keyStr, date)
+              IntKey(intKey) => p.set_intkey_datetime(intKey, date)
+              _ => p.set_index_date(-1, date)
+            }
+          _ => ()
+        }
+        return { parent, data: VT_DateTime(value=date) }
       }
       self.parse_ext(parent, key, extype, 8)
     }
