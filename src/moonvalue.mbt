@@ -855,7 +855,7 @@ pub fn to_string(self : MoonValue) -> String {
       builder.to_string()
     }
     VT_Array(value=arr) => {
-      let builder : StringBuilder = StringBuilder::new()
+      let builder : StringBuilder = StringBuilder::new()      
       builder.write_char('[')
       let mut first = true
       for v in arr {
@@ -864,7 +864,7 @@ pub fn to_string(self : MoonValue) -> String {
         } else {
           builder.write_char(',')
         }
-        builder.write_string("\{v},")
+        builder.write_string("\{v}")
       }
       builder.write_char(']')
       builder.to_string()

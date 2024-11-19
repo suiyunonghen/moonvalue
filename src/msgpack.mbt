@@ -36,7 +36,7 @@ priv enum MsgPackFormatCode {
   FmtCodeFixArray(len~ : UInt) //0x90-0x9f
   FmtCodeFixStr(len~ : UInt) //0xa0-0xbf  
   FmtCodeNegFixInt(value~ : Int) //0xe0-0xff  小负数
-}
+}derive(Show)
 
 priv struct MsgPackParser {
   _packData : IBinary
@@ -187,6 +187,7 @@ pub(all) type! MsgPackParserError {
 
 fn parse_key(self : MsgPackParser) -> IString!MsgPackParserError {
   let code = self.detectionFmtCode()
+  println("parse_key=\{code}")
   match code {
     FmtCodeFixStr(len=strLen)
     | FmtCodeStr8(len=strLen)
@@ -194,7 +195,10 @@ fn parse_key(self : MsgPackParser) -> IString!MsgPackParserError {
       let strLen = strLen.reinterpret_as_int()
       match self._packData.read_utf8?(self._offset, strLen) {
         Err(ConvertError(str)) => raise ErrorUtf8String(str)
-        Ok(value) => value
+        Ok(value) => {
+          self._offset += strLen
+          value
+        }
       }
     }
     _ => raise ErrorKey("invalidate map key code")
@@ -225,14 +229,17 @@ fn parse_value(
   match fmtCode {
     FmtCodeFixMap(len=mapLen)
     | FmtCodeMap16(len=mapLen) | FmtCodeMap32(len=mapLen) => {
-      //先探测一下key是int还是string，然后知道用intmap
-      let code = self._packData.read_byte(self._offset)
+      //先探测一下key是int还是string，然后知道用intmap      
+      let code = self._packData.read_byte(self._offset)      
       let result = if (code >= 0xd9 && code <= 0xdb) ||
         (code >= 0xa0 && code <= 0xbf) {
         let strMap = match parent {
           Some(p) =>
             match key {
-              Str(keyStr) => p.add_key_object(keyStr, StrMap)
+              Str(keyStr) => {
+                println(keyStr.to_string())
+                p.add_key_object(keyStr, StrMap)
+              }
               IntKey(intKey) => p.add_intkey_object(intKey, StrMap)
               NoKey_or_Array => p.add_arr_object(StrMap)
             }
@@ -325,7 +332,10 @@ fn parse_value(
       } else {
         match self._packData.read_utf8?(self._offset, strLen) {
           Err(ConvertError(str)) => raise ErrorUtf8String(str)
-          Ok(value) => value
+          Ok(value) => {
+            self._offset += strLen
+            value
+          }
         }
       }
       match parent {
@@ -572,4 +582,13 @@ fn parse_ext(
     None => ()
   }
   { parent, data: VT_Ext(value=bytes, extType~) }
+}
+
+test "parse"{
+  let b: Array[Byte]=[133, 164, 110, 97, 109, 101, 169, 228, 184, 141, 229, 190, 151, 233, 151, 178, 163, 97, 103, 101, 40, 163, 109, 101, 110, 195, 163, 110, 111, 119, 203, 64, 230, 69, 243, 103, 35, 148, 161, 165, 97, 114, 114, 97, 121, 146, 34, 205, 1, 89]
+  let parser = MsgPackParser::new(false,b)  
+  match parser.parser?(){
+    Ok(result)=>println(result.to_string())
+    _=>println("error")
+  }
 }

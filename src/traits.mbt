@@ -1,3 +1,16 @@
+pub(open) trait IUtf16StringBuilder{
+  append(Self,Char)->Unit
+  end_string(Self)->IString
+}
+
+pub impl IUtf16StringBuilder for Array[Char] with append(self,char: Char)->Unit{
+  self.push(char)
+}
+
+pub impl IUtf16StringBuilder for Array[Char] with end_string(self)->IString{
+  String::from_array(self)
+}
+
 pub(open) trait IString {
   charCodeAt(Self, Int) -> Int //utf16编码格式的
   length(Self) -> Int
@@ -257,6 +270,7 @@ pub(open) trait IBinary: Show {
   read_int64(Self, Int, Bool) -> Int64
   read_float(Self, Int) -> Float
   read_double(Self, Int) -> Double
+  create_utf16_str(Self)->IUtf16StringBuilder
   read_utf8(Self, Int, Int) -> IString!ConvertError
 }
 
@@ -422,6 +436,11 @@ impl IBinary with write_bool(self, offset : Int, value : Bool) -> Unit {
   }
 }
 
+pub impl IBinary for Bytes with create_utf16_str(self)->IUtf16StringBuilder{
+  let result: Array[Char] = Array::new()
+  result
+}
+
 pub impl IBinary for Bytes with length(self) -> Int { self.length() }
 
 pub impl IBinary for Bytes with write_byte(self, offset : Int, value : Byte) -> Unit {
@@ -450,6 +469,11 @@ pub impl ICopy for Bytes with copy_from(
   cpyLen : Int
 ) -> Unit {
   self.blit(offset, src, srcFrom, cpyLen)
+}
+
+pub impl IBinary for @wasmMemManager.Memory with create_utf16_str(self) -> IUtf16StringBuilder {
+  let result: Array[Char] = Array::new()
+  result
 }
 
 pub impl IBinary for @wasmMemManager.Memory with length(self) -> Int {
@@ -496,6 +520,9 @@ struct BinaryView {
 
 pub fn newBinaryView(src : IBinary, from : Int, len : Int) -> BinaryView {
   { _source: src, from, len }
+}
+pub impl IBinary for BinaryView with create_utf16_str(self) -> IUtf16StringBuilder {
+  self._source.create_utf16_str()
 }
 
 pub impl IBinary for BinaryView with length(self) -> Int { self.len }
@@ -579,21 +606,6 @@ pub impl IBinary for BinaryView with read_double(self, offset : Int) -> Double {
   self._source.read_double(self.from + offset)
 }
 
-// pub impl ICopy for BinaryView with copy_from(self,   offset : Int,
-//   src : BinaryView,
-//   srcFrom : Int,
-//   cpyLen : Int) -> Unit{
-//   self._source.copy_from(self.from+offset,src._source,srcFrom,cpyLen)  
-// }
-
-// pub impl ICopy for BinaryView with blit(self,
-//   offset : Int,
-//   src : BinaryView,
-//   srcFrom : Int,
-//   cpyLen : Int) -> Unit{
-//   self._source.blit(self.from+offset,src,srcFrom,cpyLen)
-// }
-
 pub impl IBinary for BinaryView with read_utf8(self, offset : Int, l : Int) -> IString!ConvertError {
   self._source.read_utf8!(self.from + offset, l)
 }
@@ -653,4 +665,24 @@ pub impl IString for StringView with to_string(self) -> String {
         Err(ConvertError(_)) => ""
       }
   }
+}
+
+pub impl IBinary for Array[Byte] with create_utf16_str(self) -> IUtf16StringBuilder{
+  let result: Array[Char]=Array::new()
+  result
+}
+
+pub impl IBinary for Array[Byte] with length(self) -> Int{
+  self.length()
+}
+pub impl IBinary for Array[Byte] with write_byte(self,offset: Int,byte: Byte) -> Unit{
+  self[offset]=byte
+}
+pub impl IBinary for Array[Byte] with read_byte(self, offset: Int) -> Byte{
+  self[offset]
+}
+
+test "Ibinar"{
+  let b: Array[Byte]=[23,44,88]
+  println(IBinary::read_utf8?(b,0,1).unwrap().to_string())
 }
