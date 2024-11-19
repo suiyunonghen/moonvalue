@@ -26,20 +26,20 @@ println(c["year"].unwrap().parent().unwrap().to_string())
 # read moonvalue
 A function similar to xxx_by_key reads data from the map type  
 eg.
-> string_by_key read string from map  
-> bool_by_key read bool from map
-> value_by_key return MoonValue from map  
+> string_by_key read string from map    
+> bool_by_key read bool from map   
+> value_by_key return MoonValue from map    
 
 A function similar to xxx_by_index reads data from an array  
 eg.
-> string_by_index read string from array
-> bool_by_index read bool from array
-> value_by_index return MoonValue from array
+> string_by_index read string from array  
+> bool_by_index read bool from array  
+> value_by_index return MoonValue from array  
 
 as_xxx retrieves the value from Moonvalue 
 eg.
-> as_bool
-> as_double
+> as_bool  
+> as_double   
 
 ```
 assert_eq!(result.string_by_key("name",""),"不得闲")
