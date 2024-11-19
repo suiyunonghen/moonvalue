@@ -69,13 +69,13 @@ pub fn utf8_utf16(utf8Arr : ArrayView[Byte]) -> String!ConvertError {
   String::from_array(strArr)
 }
 
-impl IBinary with read_utf8(self, offset : Int, l : Int) -> IString!ConvertError {  
+impl IBinary with read_utf8(self, offset : Int, l : Int) -> IString!ConvertError {
   //raise ConvertError("无效的Utf8编码")  
   let strArr : IUtf16StringBuilder = self.create_utf16_str()
   let mut idx = offset
   let l = offset + l
   while idx < l {
-    let code = self.read_byte(idx).to_int()    
+    let code = self.read_byte(idx).to_int()
     if (code & 0x80) == 0 {
       strArr.append(Char::from_int(code))
       idx = idx + 1
@@ -97,7 +97,7 @@ impl IBinary with read_utf8(self, offset : Int, l : Int) -> IString!ConvertError
     } else {
       raise ConvertError("无效的Utf8编码")
     }
-  }  
+  }
   strArr.end_string()
 }
 

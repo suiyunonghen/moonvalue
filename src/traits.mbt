@@ -1,13 +1,13 @@
-pub(open) trait IUtf16StringBuilder{
-  append(Self,Char)->Unit
-  end_string(Self)->IString
+pub(open) trait IUtf16StringBuilder {
+  append(Self, Char) -> Unit
+  end_string(Self) -> IString
 }
 
-pub impl IUtf16StringBuilder for Array[Char] with append(self,char: Char)->Unit{
+pub impl IUtf16StringBuilder for Array[Char] with append(self, char : Char) -> Unit {
   self.push(char)
 }
 
-pub impl IUtf16StringBuilder for Array[Char] with end_string(self)->IString{
+pub impl IUtf16StringBuilder for Array[Char] with end_string(self) -> IString {
   String::from_array(self)
 }
 
@@ -270,7 +270,7 @@ pub(open) trait IBinary: Show {
   read_int64(Self, Int, Bool) -> Int64
   read_float(Self, Int) -> Float
   read_double(Self, Int) -> Double
-  create_utf16_str(Self)->IUtf16StringBuilder
+  create_utf16_str(Self) -> IUtf16StringBuilder
   read_utf8(Self, Int, Int) -> IString!ConvertError
 }
 
@@ -436,8 +436,8 @@ impl IBinary with write_bool(self, offset : Int, value : Bool) -> Unit {
   }
 }
 
-pub impl IBinary for Bytes with create_utf16_str(self)->IUtf16StringBuilder{
-  let result: Array[Char] = Array::new()
+pub impl IBinary for Bytes with create_utf16_str(self) -> IUtf16StringBuilder {
+  let result : Array[Char] = Array::new()
   result
 }
 
@@ -472,7 +472,7 @@ pub impl ICopy for Bytes with copy_from(
 }
 
 pub impl IBinary for @wasmMemManager.Memory with create_utf16_str(self) -> IUtf16StringBuilder {
-  let result: Array[Char] = Array::new()
+  let result : Array[Char] = Array::new()
   result
 }
 
@@ -521,6 +521,7 @@ struct BinaryView {
 pub fn newBinaryView(src : IBinary, from : Int, len : Int) -> BinaryView {
   { _source: src, from, len }
 }
+
 pub impl IBinary for BinaryView with create_utf16_str(self) -> IUtf16StringBuilder {
   self._source.create_utf16_str()
 }
@@ -667,22 +668,26 @@ pub impl IString for StringView with to_string(self) -> String {
   }
 }
 
-pub impl IBinary for Array[Byte] with create_utf16_str(self) -> IUtf16StringBuilder{
-  let result: Array[Char]=Array::new()
+pub impl IBinary for Array[Byte] with create_utf16_str(self) -> IUtf16StringBuilder {
+  let result : Array[Char] = Array::new()
   result
 }
 
-pub impl IBinary for Array[Byte] with length(self) -> Int{
-  self.length()
+pub impl IBinary for Array[Byte] with length(self) -> Int { self.length() }
+
+pub impl IBinary for Array[Byte] with write_byte(
+  self,
+  offset : Int,
+  byte : Byte
+) -> Unit {
+  self[offset] = byte
 }
-pub impl IBinary for Array[Byte] with write_byte(self,offset: Int,byte: Byte) -> Unit{
-  self[offset]=byte
-}
-pub impl IBinary for Array[Byte] with read_byte(self, offset: Int) -> Byte{
+
+pub impl IBinary for Array[Byte] with read_byte(self, offset : Int) -> Byte {
   self[offset]
 }
 
-test "Ibinar"{
-  let b: Array[Byte]=[23,44,88]
-  println(IBinary::read_utf8?(b,0,1).unwrap().to_string())
+test "Ibinar" {
+  let b : Array[Byte] = [23, 44, 88]
+  println(IBinary::read_utf8?(b, 0, 1).unwrap().to_string())
 }
