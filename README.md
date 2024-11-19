@@ -24,13 +24,13 @@ println(v.to_string())
 println(c["year"].unwrap().parent().unwrap().to_string())
 ```
 # read moonvalue
-A function similar to xxx-by_key reads data from the map type  
+A function similar to xxx_by_key reads data from the map type  
 eg.
 > string_by_key read string from map  
 > bool_by_key read bool from map
 > value_by_key return MoonValue from map  
 
-A function similar to xxx-by_index reads data from an array  
+A function similar to xxx_by_index reads data from an array  
 eg.
 > string_by_index read string from array
 > bool_by_index read bool from array
