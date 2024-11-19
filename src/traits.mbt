@@ -270,8 +270,9 @@ pub(open) trait IBinary: Show {
   read_int64(Self, Int, Bool) -> Int64
   read_float(Self, Int) -> Float
   read_double(Self, Int) -> Double
-  create_utf16_str(Self) -> IUtf16StringBuilder
-  read_utf8(Self, Int, Int) -> IString!ConvertError
+  //create_utf16_str(Self) -> IUtf16StringBuilder
+  //read_utf8(Self, Int, Int) -> IString!ConvertError
+  //read_utf8string(Self, Int, Int) -> String!ConvertError
 }
 
 pub(open) trait ICopy: IBinary {
@@ -436,10 +437,10 @@ impl IBinary with write_bool(self, offset : Int, value : Bool) -> Unit {
   }
 }
 
-pub impl IBinary for Bytes with create_utf16_str(self) -> IUtf16StringBuilder {
-  let result : Array[Char] = Array::new()
-  result
-}
+// pub impl IBinary for Bytes with create_utf16_str(self) -> IUtf16StringBuilder {
+//   let result : Array[Char] = Array::new()
+//   result
+// }
 
 pub impl IBinary for Bytes with length(self) -> Int { self.length() }
 
@@ -471,84 +472,55 @@ pub impl ICopy for Bytes with copy_from(
   self.blit(offset, src, srcFrom, cpyLen)
 }
 
-pub impl IBinary for @wasmMemManager.Memory with create_utf16_str(self) -> IUtf16StringBuilder {
-  let result : Array[Char] = Array::new()
-  result
-}
-
-pub impl IBinary for @wasmMemManager.Memory with length(self) -> Int {
-  self.length
-}
-
-pub impl IBinary for @wasmMemManager.Memory with write_byte(
-  self,
-  offset : Int,
-  value : Byte
-) -> Unit {
-  self.writeByte_unsafe(offset, value.to_int())
-}
-
-pub impl IBinary for @wasmMemManager.Memory with read_byte(self, offset : Int) -> Byte {
-  self.readByte_unsafe(offset)
-}
-
-pub impl ICopy for @wasmMemManager.Memory with blit(
-  self,
-  offset : Int,
-  src : @wasmMemManager.Memory,
-  srcFrom : Int,
-  cpyLen : Int
-) -> Unit {
-  self.move_unsafe(offset, src.offset + srcFrom, cpyLen)
-}
-
-pub impl ICopy for @wasmMemManager.Memory with copy_from(
-  self,
-  offset : Int,
-  src : @wasmMemManager.Memory,
-  srcFrom : Int,
-  cpyLen : Int
-) -> Unit {
-  self.move_unsafe(offset, src.offset + srcFrom, cpyLen)
-}
-
-struct BinaryView {
-  _source : IBinary
+struct BinaryView[B] {
+  _source : B
   from : Int
   len : Int
 } derive(Show)
 
-pub fn newBinaryView(src : IBinary, from : Int, len : Int) -> BinaryView {
+pub fn newBinaryView[B : IBinary](
+  src : B,
+  from : Int,
+  len : Int
+) -> BinaryView[B] {
   { _source: src, from, len }
 }
 
-pub impl IBinary for BinaryView with create_utf16_str(self) -> IUtf16StringBuilder {
-  self._source.create_utf16_str()
-}
+pub impl IBinary for BinaryView[IBinary] with length(self) -> Int { self.len }
 
-pub impl IBinary for BinaryView with length(self) -> Int { self.len }
-
-pub impl IBinary for BinaryView with write_byte(self, offset : Int, v : Byte) -> Unit {
+pub impl IBinary for BinaryView[IBinary] with write_byte(
+  self,
+  offset : Int,
+  v : Byte
+) -> Unit {
   self._source.write_byte(self.from + offset, v)
 }
 
-pub impl IBinary for BinaryView with read_byte(self, offset : Int) -> Byte {
+pub impl IBinary for BinaryView[IBinary] with read_byte(self, offset : Int) -> Byte {
   self._source.read_byte(offset + self.from)
 }
 
-pub impl IBinary for BinaryView with write_bool(self, offset : Int, v : Bool) -> Unit {
+pub impl IBinary for BinaryView[IBinary] with write_bool(
+  self,
+  offset : Int,
+  v : Bool
+) -> Unit {
   self._source.write_bool(self.from + offset, v)
 }
 
-pub impl IBinary for BinaryView with read_bool(self, offset : Int) -> Bool {
+pub impl IBinary for BinaryView[IBinary] with read_bool(self, offset : Int) -> Bool {
   self._source.read_bool(self.from + offset)
 }
 
-pub impl IBinary for BinaryView with write_bytes(self, offset : Int, v : Bytes) -> Unit {
+pub impl IBinary for BinaryView[IBinary] with write_bytes(
+  self,
+  offset : Int,
+  v : Bytes
+) -> Unit {
   self._source.write_bytes(self.from + offset, v)
 }
 
-pub impl IBinary for BinaryView with write_int16(
+pub impl IBinary for BinaryView[IBinary] with write_int16(
   self,
   offset : Int,
   value : Int,
@@ -557,7 +529,7 @@ pub impl IBinary for BinaryView with write_int16(
   self._source.write_int16(self.from + offset, value, littleEndian)
 }
 
-pub impl IBinary for BinaryView with write_int32(
+pub impl IBinary for BinaryView[IBinary] with write_int32(
   self,
   offset : Int,
   value : Int,
@@ -566,7 +538,7 @@ pub impl IBinary for BinaryView with write_int32(
   self._source.write_int32(self.from + offset, value, littleEndian)
 }
 
-pub impl IBinary for BinaryView with write_int64(
+pub impl IBinary for BinaryView[IBinary] with write_int64(
   self,
   offset : Int,
   value : Int64,
@@ -575,7 +547,7 @@ pub impl IBinary for BinaryView with write_int64(
   self._source.write_int64(self.from + offset, value, littleEndian)
 }
 
-pub impl IBinary for BinaryView with read_int16(
+pub impl IBinary for BinaryView[IBinary] with read_int16(
   self,
   offset : Int,
   littleEndian : Bool
@@ -583,7 +555,7 @@ pub impl IBinary for BinaryView with read_int16(
   self._source.read_int16(self.from + offset, littleEndian)
 }
 
-pub impl IBinary for BinaryView with read_int32(
+pub impl IBinary for BinaryView[IBinary] with read_int32(
   self,
   offset : Int,
   littleEndian : Bool
@@ -591,7 +563,7 @@ pub impl IBinary for BinaryView with read_int32(
   self._source.read_int32(self.from + offset, littleEndian)
 }
 
-pub impl IBinary for BinaryView with read_int64(
+pub impl IBinary for BinaryView[IBinary] with read_int64(
   self,
   offset : Int,
   littleEndian : Bool
@@ -599,52 +571,75 @@ pub impl IBinary for BinaryView with read_int64(
   self._source.read_int64(self.from + offset, littleEndian)
 }
 
-pub impl IBinary for BinaryView with read_float(self, offset : Int) -> Float {
+pub impl IBinary for BinaryView[IBinary] with read_float(self, offset : Int) -> Float {
   self._source.read_float(self.from + offset)
 }
 
-pub impl IBinary for BinaryView with read_double(self, offset : Int) -> Double {
+pub impl IBinary for BinaryView[IBinary] with read_double(self, offset : Int) -> Double {
   self._source.read_double(self.from + offset)
 }
 
-pub impl IBinary for BinaryView with read_utf8(self, offset : Int, l : Int) -> IString!ConvertError {
-  self._source.read_utf8!(self.from + offset, l)
-}
-
-struct StringView {
-  _source : IBinary
+struct StringView[T, B] {
+  _source : B
   from : Int
   len : Int
-  mut _str : IString?
+  stringReader : (B, Int, Int) -> T!ConvertError
+  mut _str : T?
 }
 
-pub fn StringView::newStringView(
-  source : IBinary,
+pub fn StringView::newStringView[T : IString + Hash + Eq, B : IBinary](
+  source : B,
   from : Int,
-  len : Int
-) -> StringView {
-  { _source: source, from, len, _str: None }
+  len : Int,
+  stringReader : (B, Int, Int) -> T!ConvertError
+) -> StringView[T, B] {
+  { _source: source, from, len, _str: None, stringReader }
 }
 
-pub impl IString for StringView with charCodeAt(self, index : Int) -> Int {
+pub fn value[T : IString + Hash + Eq, B : IBinary](
+  self : StringView[T, B]
+) -> T!ConvertError {
   match self._str {
-    Some(v) => v.charCodeAt(index)
+    Some(v) => v
+    _ => (self.stringReader)!(self._source, self.from, self.len)
+  }
+}
+
+pub fn string[T : IString + Hash + Eq, B : IBinary](
+  self : StringView[T, B]
+) -> String {
+  match self._str {
+    Some(v) => v.to_string()
     _ =>
-      match self._source.read_utf8?(self.from, self.len) {
+      match (self.stringReader)?(self._source, self.from, self.len) {
+        Ok(v) => v.to_string()
+        _ => ""
+      }
+  }
+}
+
+pub impl IString for StringView[String, Bytes] with charCodeAt(
+  self,
+  index : Int
+) -> Int {
+  match self._str {
+    Some(v) => v[index].to_int()
+    _ =>
+      match (self.stringReader)?(self._source, self.from, self.len) {
         Ok(str) => {
           self._str = Some(str)
-          str.charCodeAt(index)
+          str[index].to_int()
         }
         Err(ConvertError(_)) => -1
       }
   }
 }
 
-pub impl IString for StringView with length(self) -> Int {
+pub impl IString for StringView[String, Bytes] with length(self) -> Int {
   match self._str {
     Some(v) => v.length()
     _ =>
-      match self._source.read_utf8?(self.from, self.len) {
+      match (self.stringReader)?(self._source, self.from, self.len) {
         Ok(str) => {
           self._str = Some(str)
           str.length()
@@ -654,11 +649,11 @@ pub impl IString for StringView with length(self) -> Int {
   }
 }
 
-pub impl IString for StringView with to_string(self) -> String {
+pub impl IString for StringView[String, Bytes] with to_string(self) -> String {
   match self._str {
     Some(v) => v.to_string()
     _ =>
-      match self._source.read_utf8?(self.from, self.len) {
+      match (self.stringReader)?(self._source, self.from, self.len) {
         Ok(str) => {
           self._str = Some(str)
           str.to_string()
@@ -666,11 +661,6 @@ pub impl IString for StringView with to_string(self) -> String {
         Err(ConvertError(_)) => ""
       }
   }
-}
-
-pub impl IBinary for Array[Byte] with create_utf16_str(self) -> IUtf16StringBuilder {
-  let result : Array[Char] = Array::new()
-  result
 }
 
 pub impl IBinary for Array[Byte] with length(self) -> Int { self.length() }
@@ -685,9 +675,4 @@ pub impl IBinary for Array[Byte] with write_byte(
 
 pub impl IBinary for Array[Byte] with read_byte(self, offset : Int) -> Byte {
   self[offset]
-}
-
-test "Ibinar" {
-  let b : Array[Byte] = [23, 44, 88]
-  println(IBinary::read_utf8?(b, 0, 1).unwrap().to_string())
 }

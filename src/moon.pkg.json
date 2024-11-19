@@ -1,6 +1,5 @@
 {
-  "import": [
-    "suiyunonghen/wasmMemManager",
+  "import": [    
     "suiyunonghen/datetime"
   ]  
 }

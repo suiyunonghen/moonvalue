@@ -1,5 +1,5 @@
 test "moonvalue to_string" {
-  let v = @moonvalue.new_object({})
+  let v : @moonvalue.MoonValue[String, Bytes] = @moonvalue.new_object({})
   v.set_key_string("name", "dxsoft")
   let child = @moonvalue.new_object({})
   child.set_key_string("name", "huzimo")

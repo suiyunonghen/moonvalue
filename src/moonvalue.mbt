@@ -1,4 +1,4 @@
-pub(all) enum ValueData {
+pub(all) enum ValueData[T, B] {
   VT_Null
   VT_True
   VT_False
@@ -6,36 +6,50 @@ pub(all) enum ValueData {
   VT_Double(value~ : Double)
   VT_DateTime(value~ : @datetime.DateTime)
   VT_Float(value~ : Float)
-  VT_String(value~ : IString)
-  VT_Bin(value~ : IBinary)
-  VT_Ext(value~ : IBinary, extType~ : Int)
-  VT_Obj(value~ : Map[IString, MoonValue])
-  VT_Array(value~ : Array[MoonValue])
-  VT_IntKeyObj(value~ : Map[Int64, MoonValue])
+  VT_String(value~ : T)
+  VT_ShareString(value~ : StringView[T, B])
+  VT_Bin(value~ : B)
+  VT_ShareBin(value~ : BinaryView[B])
+  VT_Ext(value~ : B, extType~ : Int)
+  VT_ShareExt(value~ : BinaryView[B], extType~ : Int)
+  VT_Obj(value~ : Map[T, MoonValue[T, B]])
+  VT_Array(value~ : Array[MoonValue[T, B]])
+  VT_IntKeyObj(value~ : Map[Int64, MoonValue[T, B]])
 }
 
-struct MoonValue {
-  mut parent : MoonValue?
-  mut data : ValueData
+struct MoonValue[T, B] {
+  mut parent : MoonValue[T, B]?
+  mut data : ValueData[T, B]
 }
 
-pub fn MoonValue::new_object(data : Map[IString, MoonValue]) -> MoonValue {
+pub fn MoonValue::new_object[T : IString + Hash + Eq, B : IBinary](
+  data : Map[T, MoonValue[T, B]]
+) -> MoonValue[T, B] {
   { parent: None, data: VT_Obj(value=data) }
 }
 
-pub fn MoonValue::new_array(arr : Array[MoonValue]) -> MoonValue {
+pub fn MoonValue::new_array[T : IString + Hash + Eq, B : IBinary](
+  arr : Array[MoonValue[T, B]]
+) -> MoonValue[T, B] {
   { parent: None, data: VT_Array(value=arr) }
 }
 
-pub fn value(self : MoonValue) -> ValueData {
+pub fn value[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B]
+) -> ValueData[T, B] {
   self.data
 }
 
-pub fn parent(self : MoonValue) -> MoonValue? {
+pub fn parent[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B]
+) -> MoonValue[T, B]? {
   self.parent
 }
 
-pub fn as_double(self : MoonValue, default~ : Double = 0) -> Double {
+pub fn as_double[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B],
+  default~ : Double = 0
+) -> Double {
   match self.data {
     VT_Int(value=v) => v.to_double()
     VT_Double(value=v) => v
@@ -51,7 +65,10 @@ pub fn as_double(self : MoonValue, default~ : Double = 0) -> Double {
   }
 }
 
-pub fn as_int(self : MoonValue, default~ : Int = 0) -> Int {
+pub fn as_int[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B],
+  default~ : Int = 0
+) -> Int {
   match self.data {
     VT_Int(value=v) => v.to_int()
     VT_Double(value=v) => v.to_int()
@@ -67,7 +84,10 @@ pub fn as_int(self : MoonValue, default~ : Int = 0) -> Int {
   }
 }
 
-pub fn as_bool(self : MoonValue, default~ : Bool) -> Bool {
+pub fn as_bool[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B],
+  default~ : Bool
+) -> Bool {
   match self.data {
     VT_Null => default
     VT_True => true
@@ -84,7 +104,11 @@ pub fn as_bool(self : MoonValue, default~ : Bool) -> Bool {
   }
 }
 
-pub fn op_set(self : MoonValue, key : IString, val : MoonValue) -> Unit {
+pub fn op_set[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B],
+  key : T,
+  val : MoonValue[T, B]
+) -> Unit {
   match val.parent {
     Some(_) => return
     _ => ()
@@ -111,7 +135,10 @@ pub fn op_set(self : MoonValue, key : IString, val : MoonValue) -> Unit {
   }
 }
 
-pub fn op_get(self : MoonValue, key : IString) -> MoonValue? {
+pub fn op_get[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B],
+  key : T
+) -> MoonValue[T, B]? {
   match self.data {
     VT_Obj(value~) => value[key]
     VT_Array(value~) =>
@@ -128,11 +155,19 @@ pub fn op_get(self : MoonValue, key : IString) -> MoonValue? {
   }
 }
 
-pub fn set_key_int(self : MoonValue, key : IString, v : Int) -> Unit {
+pub fn set_key_int[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B],
+  key : T,
+  v : Int
+) -> Unit {
   self.set_key_int64(key, v.to_int64())
 }
 
-pub fn set_key_bool(self : MoonValue, key : IString, bool : Bool) -> Unit {
+pub fn set_key_bool[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B],
+  key : T,
+  bool : Bool
+) -> Unit {
   match self.data {
     VT_Obj(value~) =>
       match value[key] {
@@ -156,7 +191,11 @@ pub fn set_key_bool(self : MoonValue, key : IString, bool : Bool) -> Unit {
   }
 }
 
-pub fn set_key_float(self : MoonValue, key : IString, v : Float) -> Unit {
+pub fn set_key_float[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B],
+  key : T,
+  v : Float
+) -> Unit {
   match self.data {
     VT_Obj(value~) =>
       match value[key] {
@@ -167,7 +206,11 @@ pub fn set_key_float(self : MoonValue, key : IString, v : Float) -> Unit {
   }
 }
 
-pub fn set_key_double(self : MoonValue, key : IString, v : Double) -> Unit {
+pub fn set_key_double[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B],
+  key : T,
+  v : Double
+) -> Unit {
   match self.data {
     VT_Obj(value~) =>
       match value[key] {
@@ -178,7 +221,11 @@ pub fn set_key_double(self : MoonValue, key : IString, v : Double) -> Unit {
   }
 }
 
-pub fn set_key_bin(self : MoonValue, key : IString, v : IBinary) -> Unit {
+pub fn set_key_bin[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B],
+  key : T,
+  v : B
+) -> Unit {
   match self.data {
     VT_Obj(value~) =>
       match value[key] {
@@ -189,9 +236,24 @@ pub fn set_key_bin(self : MoonValue, key : IString, v : IBinary) -> Unit {
   }
 }
 
-pub fn set_key_datetime(
-  self : MoonValue,
-  key : IString,
+pub fn set_key_share_bin[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B],
+  key : T,
+  v : BinaryView[B]
+) -> Unit {
+  match self.data {
+    VT_Obj(value~) =>
+      match value[key] {
+        Some(vdata) => vdata.data = VT_ShareBin(value=v)
+        None => value[key] = { parent: Some(self), data: VT_ShareBin(value=v) }
+      }
+    _ => ()
+  }
+}
+
+pub fn set_key_datetime[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B],
+  key : T,
   v : @datetime.DateTime
 ) -> Unit {
   match self.data {
@@ -204,10 +266,10 @@ pub fn set_key_datetime(
   }
 }
 
-pub fn set_key_ext(
-  self : MoonValue,
-  key : IString,
-  v : IBinary,
+pub fn set_key_ext[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B],
+  key : T,
+  v : B,
   extType : Int
 ) -> Unit {
   match self.data {
@@ -221,10 +283,30 @@ pub fn set_key_ext(
   }
 }
 
-pub fn set_intkey_ext(
-  self : MoonValue,
+pub fn set_key_share_ext[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B],
+  key : T,
+  v : BinaryView[B],
+  extType : Int
+) -> Unit {
+  match self.data {
+    VT_Obj(value~) =>
+      match value[key] {
+        Some(vdata) => vdata.data = VT_ShareExt(value=v, extType~)
+        None =>
+          value[key] = {
+            parent: Some(self),
+            data: VT_ShareExt(value=v, extType~),
+          }
+      }
+    _ => ()
+  }
+}
+
+pub fn set_intkey_ext[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B],
   key : Int64,
-  v : IBinary,
+  v : B,
   extType : Int
 ) -> Unit {
   match self.data {
@@ -238,10 +320,30 @@ pub fn set_intkey_ext(
   }
 }
 
-pub fn set_index_ext(
-  self : MoonValue,
+pub fn set_intkey_share_ext[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B],
+  key : Int64,
+  v : BinaryView[B],
+  extType : Int
+) -> Unit {
+  match self.data {
+    VT_IntKeyObj(value~) =>
+      match value[key] {
+        Some(vdata) => vdata.data = VT_ShareExt(value=v, extType~)
+        None =>
+          value[key] = {
+            parent: Some(self),
+            data: VT_ShareExt(value=v, extType~),
+          }
+      }
+    _ => ()
+  }
+}
+
+pub fn set_index_ext[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B],
   index : Int,
-  v : IBinary,
+  v : B,
   extType : Int
 ) -> Unit {
   match self.data {
@@ -255,7 +357,28 @@ pub fn set_index_ext(
   }
 }
 
-pub fn set_intkey_float(self : MoonValue, key : Int64, v : Float) -> Unit {
+pub fn set_index_share_ext[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B],
+  index : Int,
+  v : BinaryView[B],
+  extType : Int
+) -> Unit {
+  match self.data {
+    VT_Array(value=arr) =>
+      if index >= 0 && index < arr.length() {
+        arr[index].data = VT_ShareExt(value=v, extType~)
+      } else {
+        arr.push({ parent: Some(self), data: VT_ShareExt(value=v, extType~) })
+      }
+    _ => ()
+  }
+}
+
+pub fn set_intkey_float[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B],
+  key : Int64,
+  v : Float
+) -> Unit {
   match self.data {
     VT_IntKeyObj(value~) =>
       match value[key] {
@@ -266,7 +389,11 @@ pub fn set_intkey_float(self : MoonValue, key : Int64, v : Float) -> Unit {
   }
 }
 
-pub fn set_intkey_bin(self : MoonValue, key : Int64, v : IBinary) -> Unit {
+pub fn set_intkey_bin[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B],
+  key : Int64,
+  v : B
+) -> Unit {
   match self.data {
     VT_IntKeyObj(value~) =>
       match value[key] {
@@ -277,8 +404,23 @@ pub fn set_intkey_bin(self : MoonValue, key : Int64, v : IBinary) -> Unit {
   }
 }
 
-pub fn set_intkey_datetime(
-  self : MoonValue,
+pub fn set_intkey_share_bin[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B],
+  key : Int64,
+  v : BinaryView[B]
+) -> Unit {
+  match self.data {
+    VT_IntKeyObj(value~) =>
+      match value[key] {
+        Some(vdata) => vdata.data = VT_ShareBin(value=v)
+        None => value[key] = { parent: Some(self), data: VT_ShareBin(value=v) }
+      }
+    _ => ()
+  }
+}
+
+pub fn set_intkey_datetime[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B],
   key : Int64,
   v : @datetime.DateTime
 ) -> Unit {
@@ -292,7 +434,11 @@ pub fn set_intkey_datetime(
   }
 }
 
-pub fn set_intkey_double(self : MoonValue, key : Int64, v : Double) -> Unit {
+pub fn set_intkey_double[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B],
+  key : Int64,
+  v : Double
+) -> Unit {
   match self.data {
     VT_IntKeyObj(value~) =>
       match value[key] {
@@ -303,7 +449,11 @@ pub fn set_intkey_double(self : MoonValue, key : Int64, v : Double) -> Unit {
   }
 }
 
-pub fn set_key_string(self : MoonValue, key : IString, v : IString) -> Unit {
+pub fn set_key_string[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B],
+  key : T,
+  v : T
+) -> Unit {
   match self.data {
     VT_Obj(value~) =>
       match value[key] {
@@ -314,7 +464,27 @@ pub fn set_key_string(self : MoonValue, key : IString, v : IString) -> Unit {
   }
 }
 
-pub fn set_intkey_string(self : MoonValue, key : Int64, v : IString) -> Unit {
+pub fn set_key_share_string[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B],
+  key : T,
+  v : StringView[T, B]
+) -> Unit {
+  match self.data {
+    VT_Obj(value~) =>
+      match value[key] {
+        Some(vdata) => vdata.data = VT_ShareString(value=v)
+        None =>
+          value[key] = { parent: Some(self), data: VT_ShareString(value=v) }
+      }
+    _ => ()
+  }
+}
+
+pub fn set_intkey_string[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B],
+  key : Int64,
+  v : T
+) -> Unit {
   match self.data {
     VT_IntKeyObj(value~) =>
       match value[key] {
@@ -325,7 +495,27 @@ pub fn set_intkey_string(self : MoonValue, key : Int64, v : IString) -> Unit {
   }
 }
 
-pub fn set_intkey_bool(self : MoonValue, key : Int64, v : Bool) -> Unit {
+pub fn set_intkey_share_string[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B],
+  key : Int64,
+  v : StringView[T, B]
+) -> Unit {
+  match self.data {
+    VT_IntKeyObj(value~) =>
+      match value[key] {
+        Some(vdata) => vdata.data = VT_ShareString(value=v)
+        None =>
+          value[key] = { parent: Some(self), data: VT_ShareString(value=v) }
+      }
+    _ => ()
+  }
+}
+
+pub fn set_intkey_bool[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B],
+  key : Int64,
+  v : Bool
+) -> Unit {
   match self.data {
     VT_IntKeyObj(value~) =>
       match value[key] {
@@ -349,7 +539,11 @@ pub fn set_intkey_bool(self : MoonValue, key : Int64, v : Bool) -> Unit {
   }
 }
 
-pub fn set_intkey_int64(self : MoonValue, key : Int64, v : Int64) -> Unit {
+pub fn set_intkey_int64[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B],
+  key : Int64,
+  v : Int64
+) -> Unit {
   match self.data {
     VT_IntKeyObj(value~) =>
       match value[key] {
@@ -360,7 +554,11 @@ pub fn set_intkey_int64(self : MoonValue, key : Int64, v : Int64) -> Unit {
   }
 }
 
-pub fn set_key_int64(self : MoonValue, key : IString, v : Int64) -> Unit {
+pub fn set_key_int64[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B],
+  key : T,
+  v : Int64
+) -> Unit {
   match self.data {
     VT_Obj(value~) =>
       match value[key] {
@@ -377,11 +575,11 @@ pub(all) enum CompValueType {
   Array
 }
 
-pub fn add_key_object(
-  self : MoonValue,
-  key : IString,
+pub fn add_key_object[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B],
+  key : T,
   valueType : CompValueType
-) -> MoonValue {
+) -> MoonValue[T, B] {
   match self.data {
     VT_Obj(value=map) =>
       match map[key] {
@@ -502,7 +700,7 @@ pub fn add_key_object(
     _ => ()
   }
   //改变类型
-  let map : Map[IString, MoonValue] = {}
+  let map : Map[T, MoonValue[T, B]] = {}
   let result = {
     parent: Some(self),
     data: match valueType {
@@ -516,11 +714,11 @@ pub fn add_key_object(
   result
 }
 
-pub fn add_intkey_object(
-  self : MoonValue,
+pub fn add_intkey_object[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B],
   key : Int64,
   valueType : CompValueType
-) -> MoonValue {
+) -> MoonValue[T, B] {
   match self.data {
     VT_IntKeyObj(value=map) =>
       match map[key] {
@@ -557,43 +755,43 @@ pub fn add_intkey_object(
           return result
         }
       }
-    VT_Obj(value=map) => {
-      let key = key.to_string()
-      match map[key] {
-        Some(mvalue) => {
-          match valueType {
-            StrMap =>
-              match mvalue.data {
-                VT_Obj(_) => ()
-                _ => mvalue.data = VT_Obj(value={})
-              }
-            IntMap =>
-              match mvalue.data {
-                VT_IntKeyObj(_) => ()
-                _ => mvalue.data = VT_IntKeyObj(value={})
-              }
-            Array =>
-              match mvalue.data {
-                VT_Array(_) => ()
-                _ => mvalue.data = VT_Array(value=[])
-              }
-          }
-          return mvalue
-        }
-        _ => {
-          let result = {
-            parent: Some(self),
-            data: match valueType {
-              StrMap => VT_Obj(value={})
-              IntMap => VT_IntKeyObj(value={})
-              Array => VT_Array(value=[])
-            },
-          }
-          map[key] = result
-          return result
-        }
-      }
-    }
+    // VT_Obj(value=map) => {
+    //   let key = key.to_string()
+    //   match map[key] {
+    //     Some(mvalue) => {
+    //       match valueType {
+    //         StrMap =>
+    //           match mvalue.data {
+    //             VT_Obj(_) => ()
+    //             _ => mvalue.data = VT_Obj(value={})
+    //           }
+    //         IntMap =>
+    //           match mvalue.data {
+    //             VT_IntKeyObj(_) => ()
+    //             _ => mvalue.data = VT_IntKeyObj(value={})
+    //           }
+    //         Array =>
+    //           match mvalue.data {
+    //             VT_Array(_) => ()
+    //             _ => mvalue.data = VT_Array(value=[])
+    //           }
+    //       }
+    //       return mvalue
+    //     }
+    //     _ => {
+    //       let result = {
+    //         parent: Some(self),
+    //         data: match valueType {
+    //           StrMap => VT_Obj(value={})
+    //           IntMap => VT_IntKeyObj(value={})
+    //           Array => VT_Array(value=[])
+    //         },
+    //       }
+    //       map[key] = result
+    //       return result
+    //     }
+    //   }
+    // }
     VT_Array(value=arr) =>
       if key < arr.length().to_int64() {
         let index = key.to_int()
@@ -633,7 +831,7 @@ pub fn add_intkey_object(
     _ => ()
   }
   //改变类型
-  let map : Map[Int64, MoonValue] = {}
+  let map : Map[Int64, MoonValue[T, B]] = {}
   let result = {
     parent: Some(self),
     data: match valueType {
@@ -647,7 +845,10 @@ pub fn add_intkey_object(
   result
 }
 
-pub fn add_arr_object(self : MoonValue, valueType : CompValueType) -> MoonValue {
+pub fn add_arr_object[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B],
+  valueType : CompValueType
+) -> MoonValue[T, B] {
   match self.data {
     VT_Array(value=arr) =>
       match valueType {
@@ -669,7 +870,7 @@ pub fn add_arr_object(self : MoonValue, valueType : CompValueType) -> MoonValue 
       }
     _ => ()
   }
-  let arr : Array[MoonValue] = []
+  let arr : Array[MoonValue[T, B]] = []
   let result = {
     parent: Some(self),
     data: match valueType {
@@ -683,7 +884,11 @@ pub fn add_arr_object(self : MoonValue, valueType : CompValueType) -> MoonValue 
   result
 }
 
-pub fn set_index_string(self : MoonValue, index : Int, v : IString) -> Unit {
+pub fn set_index_string[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B],
+  index : Int,
+  v : T
+) -> Unit {
   match self.data {
     VT_Array(value=arr) =>
       if index >= 0 && index < arr.length() {
@@ -695,7 +900,27 @@ pub fn set_index_string(self : MoonValue, index : Int, v : IString) -> Unit {
   }
 }
 
-pub fn set_index_bin(self : MoonValue, index : Int, v : IBinary) -> Unit {
+pub fn set_index_share_string[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B],
+  index : Int,
+  v : StringView[T, B]
+) -> Unit {
+  match self.data {
+    VT_Array(value=arr) =>
+      if index >= 0 && index < arr.length() {
+        arr[index].data = VT_ShareString(value=v)
+      } else {
+        arr.push({ parent: Some(self), data: VT_ShareString(value=v) })
+      }
+    _ => ()
+  }
+}
+
+pub fn set_index_bin[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B],
+  index : Int,
+  v : B
+) -> Unit {
   match self.data {
     VT_Array(value=arr) =>
       if index >= 0 && index < arr.length() {
@@ -707,8 +932,24 @@ pub fn set_index_bin(self : MoonValue, index : Int, v : IBinary) -> Unit {
   }
 }
 
-pub fn set_index_date(
-  self : MoonValue,
+pub fn set_index_share_bin[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B],
+  index : Int,
+  v : BinaryView[B]
+) -> Unit {
+  match self.data {
+    VT_Array(value=arr) =>
+      if index >= 0 && index < arr.length() {
+        arr[index].data = VT_ShareBin(value=v)
+      } else {
+        arr.push({ parent: Some(self), data: VT_ShareBin(value=v) })
+      }
+    _ => ()
+  }
+}
+
+pub fn set_index_date[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B],
   index : Int,
   v : @datetime.DateTime
 ) -> Unit {
@@ -723,7 +964,11 @@ pub fn set_index_date(
   }
 }
 
-pub fn set_index_float(self : MoonValue, index : Int, v : Float) -> Unit {
+pub fn set_index_float[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B],
+  index : Int,
+  v : Float
+) -> Unit {
   match self.data {
     VT_Array(value=arr) =>
       if index >= 0 && index < arr.length() {
@@ -735,7 +980,11 @@ pub fn set_index_float(self : MoonValue, index : Int, v : Float) -> Unit {
   }
 }
 
-pub fn set_index_double(self : MoonValue, index : Int, v : Double) -> Unit {
+pub fn set_index_double[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B],
+  index : Int,
+  v : Double
+) -> Unit {
   match self.data {
     VT_Array(value=arr) =>
       if index >= 0 && index < arr.length() {
@@ -747,7 +996,11 @@ pub fn set_index_double(self : MoonValue, index : Int, v : Double) -> Unit {
   }
 }
 
-pub fn set_index_bool(self : MoonValue, index : Int, v : Bool) -> Unit {
+pub fn set_index_bool[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B],
+  index : Int,
+  v : Bool
+) -> Unit {
   match self.data {
     VT_Array(value=arr) =>
       if index >= 0 && index < arr.length() {
@@ -765,7 +1018,11 @@ pub fn set_index_bool(self : MoonValue, index : Int, v : Bool) -> Unit {
   }
 }
 
-pub fn set_index_int64(self : MoonValue, index : Int, v : Int64) -> Unit {
+pub fn set_index_int64[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B],
+  index : Int,
+  v : Int64
+) -> Unit {
   match self.data {
     VT_Array(value=arr) =>
       if index >= 0 && index < arr.length() {
@@ -777,15 +1034,22 @@ pub fn set_index_int64(self : MoonValue, index : Int, v : Int64) -> Unit {
   }
 }
 
-pub fn convert2KV(self : MoonValue) -> Unit {
+pub fn convert2KV[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B]
+) -> Unit {
   self.data = VT_Obj(value={})
 }
 
-pub fn convert2IntKV(self : MoonValue) -> Unit {
+pub fn convert2IntKV[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B]
+) -> Unit {
   self.data = VT_IntKeyObj(value={})
 }
 
-pub fn convert2Bool(self : MoonValue, value : Bool) -> Unit {
+pub fn convert2Bool[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B],
+  value : Bool
+) -> Unit {
   if value {
     self.data = VT_True
   } else {
@@ -793,40 +1057,58 @@ pub fn convert2Bool(self : MoonValue, value : Bool) -> Unit {
   }
 }
 
-pub fn convert2Int(self : MoonValue, value : Int64) -> Unit {
+pub fn convert2Int[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B],
+  value : Int64
+) -> Unit {
   self.data = VT_Int(value~)
 }
 
-pub fn convert2Null(self : MoonValue) -> Unit {
+pub fn convert2Null[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B]
+) -> Unit {
   self.data = VT_Null
 }
 
-pub fn convert2Double(self : MoonValue, value : Double) -> Unit {
+pub fn convert2Double[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B],
+  value : Double
+) -> Unit {
   self.data = VT_Double(value~)
 }
 
-pub fn convert2Float(self : MoonValue, value : Float) -> Unit {
+pub fn convert2Float[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B],
+  value : Float
+) -> Unit {
   self.data = VT_Float(value~)
 }
 
-pub fn convert2Array(self : MoonValue) -> Unit {
+pub fn convert2Array[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B]
+) -> Unit {
   self.data = VT_Array(value=[])
 }
 
-fn level(self : MoonValue) -> Int {
+fn level[T : IString + Hash + Eq, B : IBinary](self : MoonValue[T, B]) -> Int {
   loop self.parent, 0 {
     Some(parent), result => continue parent.parent, 1 + result
     _, result => break result
   }
 }
 
-pub fn to_string(self : MoonValue) -> String {
+pub fn to_string[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B]
+) -> String {
   match self.data {
     VT_Null => "null"
     VT_True => "true"
     VT_False => "false"
     VT_Int(value=v) => v.to_string()
-    VT_Double(value=v) => v.to_string()
+    VT_Double(value=v) => {
+      println("double")
+      v.to_string()
+    }
     VT_Float(value=v) => v.to_string()
     VT_String(value=v) => v.to_string()
     VT_Bin(value=v) => v.to_string()
@@ -869,6 +1151,9 @@ pub fn to_string(self : MoonValue) -> String {
       builder.write_char(']')
       builder.to_string()
     }
+    VT_ShareBin(value=_) => ""
+    VT_ShareExt(value=_, extType=_) => ""
+    VT_ShareString(value=view) => view.string()
     VT_IntKeyObj(value=intMap) => {
       let builder : StringBuilder = StringBuilder::new()
       let mulSpace = self.level()

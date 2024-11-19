@@ -38,17 +38,32 @@ priv enum MsgPackFormatCode {
   FmtCodeNegFixInt(value~ : Int) //0xe0-0xff  小负数
 } derive(Show)
 
-priv struct MsgPackParser {
-  _packData : IBinary
+struct MsgPackParser[T, B] {
+  _packData : B
   shareBinary : Bool
+  stringReader : (B, Int, Int) -> T!ConvertError
+  binReader : (B, Int, Int) -> B
   mut _offset : Int
 }
 
-fn MsgPackParser::new(shareBinary : Bool, binary : IBinary) -> MsgPackParser {
-  { _packData: binary, shareBinary, _offset: 0 }
+fn MsgPackParser::new[T : IString + Hash + Eq, B : IBinary](
+  shareBinary : Bool,
+  binary : B,
+  utf8Reader : (B, Int, Int) -> T!ConvertError,
+  binReader : (B, Int, Int) -> B
+) -> MsgPackParser[T, B] {
+  {
+    _packData: binary,
+    shareBinary,
+    _offset: 0,
+    stringReader: utf8Reader,
+    binReader,
+  }
 }
 
-fn detectionFmtCode(self : MsgPackParser) -> MsgPackFormatCode {
+fn detectionFmtCode[T : IString + Hash + Eq, B : IBinary](
+  self : MsgPackParser[T, B]
+) -> MsgPackFormatCode {
   let formatCode = self._packData.read_byte(self._offset)
   self._offset += 1
   match formatCode {
@@ -109,13 +124,17 @@ fn detectionFmtCode(self : MsgPackParser) -> MsgPackFormatCode {
   }
 }
 
-fn parse_u8(self : MsgPackParser) -> Int {
+fn parse_u8[T : IString + Hash + Eq, B : IBinary](
+  self : MsgPackParser[T, B]
+) -> Int {
   let result = self._packData.read_byte(self._offset).to_int()
   self._offset += 1
   result
 }
 
-fn parse_i8(self : MsgPackParser) -> Int {
+fn parse_i8[T : IString + Hash + Eq, B : IBinary](
+  self : MsgPackParser[T, B]
+) -> Int {
   let mut result = self._packData.read_byte(self._offset).to_int()
   if result > 127 {
     result -= 256
@@ -124,13 +143,17 @@ fn parse_i8(self : MsgPackParser) -> Int {
   result
 }
 
-fn parse_u16(self : MsgPackParser) -> Int {
+fn parse_u16[T : IString + Hash + Eq, B : IBinary](
+  self : MsgPackParser[T, B]
+) -> Int {
   let result = self._packData.read_int16(self._offset, false)
   self._offset += 2
   result
 }
 
-fn parse_i16(self : MsgPackParser) -> Int {
+fn parse_i16[T : IString + Hash + Eq, B : IBinary](
+  self : MsgPackParser[T, B]
+) -> Int {
   let mut result = self._packData.read_int16(self._offset, false)
   if result > 32767 {
     result -= 65536
@@ -139,7 +162,9 @@ fn parse_i16(self : MsgPackParser) -> Int {
   result
 }
 
-fn parse_u32(self : MsgPackParser) -> UInt {
+fn parse_u32[T : IString + Hash + Eq, B : IBinary](
+  self : MsgPackParser[T, B]
+) -> UInt {
   let result = self._packData
     .read_int32(self._offset, false)
     .reinterpret_as_uint()
@@ -147,7 +172,9 @@ fn parse_u32(self : MsgPackParser) -> UInt {
   result
 }
 
-fn parse_u64(self : MsgPackParser) -> UInt64 {
+fn parse_u64[T : IString + Hash + Eq, B : IBinary](
+  self : MsgPackParser[T, B]
+) -> UInt64 {
   let result = self._packData
     .read_int64(self._offset, false)
     .reinterpret_as_uint64()
@@ -155,25 +182,31 @@ fn parse_u64(self : MsgPackParser) -> UInt64 {
   result
 }
 
-fn parse_float(self : MsgPackParser) -> Float {
+fn parse_float[T : IString + Hash + Eq, B : IBinary](
+  self : MsgPackParser[T, B]
+) -> Float {
   let result = self._packData.read_float(self._offset)
   self._offset += 4
   result
 }
 
-fn parse_double(self : MsgPackParser) -> Double {
+fn parse_double[T : IString + Hash + Eq, B : IBinary](
+  self : MsgPackParser[T, B]
+) -> Double {
   let result = self._packData.read_double(self._offset)
   self._offset += 8
   result
 }
 
-fn parser(self : MsgPackParser) -> MoonValue!MsgPackParserError {
+pub fn parser[T : IString + Hash + Eq, B : IBinary](
+  self : MsgPackParser[T, B]
+) -> MoonValue[T, B]!MsgPackParserError {
   self.parse_value!(self.detectionFmtCode(), None, KeyInfo::NoKey_or_Array)
 }
 
-enum KeyInfo {
+enum KeyInfo[T] {
   NoKey_or_Array
-  Str(IString)
+  Str(T)
   IntKey(Int64)
 }
 
@@ -185,15 +218,16 @@ pub(all) type! MsgPackParserError {
   ErrorIntKey(String)
 }
 
-fn parse_key(self : MsgPackParser) -> IString!MsgPackParserError {
+fn parse_key[T : IString + Hash + Eq, B : IBinary](
+  self : MsgPackParser[T, B]
+) -> T!MsgPackParserError {
   let code = self.detectionFmtCode()
-  println("parse_key=\{code}")
   match code {
     FmtCodeFixStr(len=strLen)
     | FmtCodeStr8(len=strLen)
     | FmtCodeStr16(len=strLen) | FmtCodeStr32(len=strLen) => {
       let strLen = strLen.reinterpret_as_int()
-      match self._packData.read_utf8?(self._offset, strLen) {
+      match (self.stringReader)?(self._packData, self._offset, strLen) {
         Err(ConvertError(str)) => raise ErrorUtf8String(str)
         Ok(value) => {
           self._offset += strLen
@@ -205,7 +239,9 @@ fn parse_key(self : MsgPackParser) -> IString!MsgPackParserError {
   }
 }
 
-fn parse_intKey(self : MsgPackParser) -> Int64!MsgPackParserError {
+fn parse_intKey[T : IString + Hash + Eq, B : IBinary](
+  self : MsgPackParser[T, B]
+) -> Int64!MsgPackParserError {
   let code = self.detectionFmtCode()
   match code {
     FmtCodeUInt8(value=vInt)
@@ -220,12 +256,12 @@ fn parse_intKey(self : MsgPackParser) -> Int64!MsgPackParserError {
   }
 }
 
-fn parse_value(
-  self : MsgPackParser,
+fn parse_value[T : IString + Hash + Eq, B : IBinary](
+  self : MsgPackParser[T, B],
   fmtCode : MsgPackFormatCode,
-  parent : MoonValue?,
-  key : KeyInfo
-) -> MoonValue!MsgPackParserError {
+  parent : MoonValue[T, B]?,
+  key : KeyInfo[T]
+) -> MoonValue[T, B]!MsgPackParserError {
   match fmtCode {
     FmtCodeFixMap(len=mapLen)
     | FmtCodeMap16(len=mapLen) | FmtCodeMap32(len=mapLen) => {
@@ -321,33 +357,43 @@ fn parse_value(
     | FmtCodeStr8(len=strLen)
     | FmtCodeStr16(len=strLen) | FmtCodeStr32(len=strLen) => {
       let strLen = strLen.reinterpret_as_int()
-      let strData : IString = if self.shareBinary {
-        let strView : IString = StringView::newStringView(
+      if self.shareBinary {
+        let view : StringView[T, B] = newStringView(
           self._packData,
           self._offset,
           strLen,
+          self.stringReader,
         )
         self._offset += strLen
-        strView
+        match parent {
+          Some(p) => {
+            match key {
+              Str(keystr) => p.set_key_share_string(keystr, view)
+              IntKey(intKey) => p.set_intkey_share_string(intKey, view)
+              _ => p.set_index_share_string(-1, view)
+            }
+            return { parent, data: VT_ShareString(value=view) }
+          }
+          _ => return { parent, data: VT_ShareString(value=view) }
+        }
       } else {
-        match self._packData.read_utf8?(self._offset, strLen) {
+        match (self.stringReader)?(self._packData, self._offset, strLen) {
           Err(ConvertError(str)) => raise ErrorUtf8String(str)
-          Ok(value) => {
+          Ok(val) => {
             self._offset += strLen
-            value
+            match parent {
+              Some(p) => {
+                match key {
+                  Str(keystr) => p.set_key_string(keystr, val)
+                  IntKey(intKey) => p.set_intkey_string(intKey, val)
+                  _ => p.set_index_string(-1, val)
+                }
+                return { parent, data: VT_String(value=val) }
+              }
+              _ => return { parent, data: VT_String(value=val) }
+            }
           }
         }
-      }
-      match parent {
-        Some(p) => {
-          match key {
-            Str(keystr) => p.set_key_string(keystr, strData)
-            IntKey(intKey) => p.set_intkey_string(intKey, strData)
-            _ => p.set_index_string(-1, strData)
-          }
-          { parent, data: VT_String(value=strData) }
-        }
-        _ => { parent, data: VT_String(value=strData) }
       }
     }
     FmtCodeFalse => {
@@ -404,26 +450,35 @@ fn parse_value(
     FmtCodeBin8(len=binLen)
     | FmtCodeBin16(len=binLen) | FmtCodeBin32(len=binLen) => {
       let binLen = binLen.reinterpret_as_int()
-      let bytes = if self.shareBinary {
-        let bv : IBinary = newBinaryView(self._packData, self._offset, binLen)
-        self._offset += binLen
-        bv
+      if self.shareBinary {
+        let view : BinaryView[B] = newBinaryView(
+          self._packData,
+          self._offset,
+          binLen,
+        )
+        match parent {
+          Some(p) =>
+            match key {
+              Str(keyStr) => p.set_key_share_bin(keyStr, view)
+              IntKey(intKey) => p.set_intkey_share_bin(intKey, view)
+              _ => p.set_index_share_bin(-1, view)
+            }
+          None => ()
+        }
+        return { parent, data: VT_ShareBin(value=view) }
       } else {
-        let bytes : IBinary = Bytes::make(binLen, 0)
-        ICopy::copy_from(bytes, 0, self._packData, self._offset, binLen)
-        self._offset += binLen
-        bytes
+        let bin = (self.binReader)(self._packData, self._offset, binLen)
+        match parent {
+          Some(p) =>
+            match key {
+              Str(keyStr) => p.set_key_bin(keyStr, bin)
+              IntKey(intKey) => p.set_intkey_bin(intKey, bin)
+              _ => p.set_index_bin(-1, bin)
+            }
+          None => ()
+        }
+        return { parent, data: VT_Bin(value=bin) }
       }
-      match parent {
-        Some(p) =>
-          match key {
-            Str(keyStr) => p.set_key_bin(keyStr, bytes)
-            IntKey(intKey) => p.set_intkey_bin(intKey, bytes)
-            _ => p.set_index_bin(-1, bytes)
-          }
-        None => ()
-      }
-      { parent, data: VT_Bin(value=bytes) }
     }
     FmtCodeExt8(len=extLen, extType=exType) => {
       if extLen == 0 {
@@ -555,43 +610,159 @@ fn parse_value(
   }
 }
 
-fn parse_ext(
-  self : MsgPackParser,
-  parent : MoonValue?,
-  key : KeyInfo,
+fn parse_ext[T : IString + Hash + Eq, B : IBinary](
+  self : MsgPackParser[T, B],
+  parent : MoonValue[T, B]?,
+  key : KeyInfo[T],
   extType : Int,
   binLen : Int
-) -> MoonValue {
-  let bytes = if self.shareBinary {
-    let bv : IBinary = newBinaryView(self._packData, self._offset, binLen)
-    self._offset += binLen
-    bv
+) -> MoonValue[T, B] {
+  if self.shareBinary {
+    let bin = newBinaryView(self._packData, self._offset, binLen)
+    match parent {
+      Some(p) =>
+        match key {
+          Str(keyStr) => p.set_key_share_ext(keyStr, bin, extType)
+          IntKey(intKey) => p.set_intkey_share_ext(intKey, bin, extType)
+          _ => p.set_index_share_ext(-1, bin, extType)
+        }
+      None => ()
+    }
+    return { parent, data: VT_ShareExt(value=bin, extType~) }
   } else {
-    let bytes : IBinary = Bytes::make(binLen, 0)
-    ICopy::copy_from(bytes, 0, self._packData, self._offset, binLen)
-    self._offset += binLen
-    bytes
+    let bin = (self.binReader)(self._packData, self._offset, binLen)
+    match parent {
+      Some(p) =>
+        match key {
+          Str(keyStr) => p.set_key_ext(keyStr, bin, extType)
+          IntKey(intKey) => p.set_intkey_ext(intKey, bin, extType)
+          _ => p.set_index_ext(-1, bin, extType)
+        }
+      None => ()
+    }
+    return { parent, data: VT_Ext(value=bin, extType~) }
   }
-  match parent {
-    Some(p) =>
-      match key {
-        Str(keyStr) => p.set_key_ext(keyStr, bytes, extType)
-        IntKey(intKey) => p.set_intkey_ext(intKey, bytes, extType)
-        _ => p.set_index_ext(-1, bytes, extType)
-      }
-    None => ()
+}
+
+fn read_utf8string(
+  bin : Array[Byte],
+  offset : Int,
+  l : Int
+) -> String!ConvertError {
+  let strArr : Array[Char] = Array::new()
+  let mut idx = offset
+  let l = offset + l
+  while idx < l {
+    let code = bin[idx].to_int()
+    if (code & 0x80) == 0 {
+      strArr.push(Char::from_int(code))
+      idx = idx + 1
+    } else if (code & 0xE0) == 0xC0 {
+      //是2个字节的格式 0080 - 07FF 110xxxxx 10xxxxxx
+      let code2 = bin[idx + 1].to_int()
+      strArr.push(Char::from_int(((code & 0x1F) << 6) | (code2 & 0x3F)))
+      idx = idx + 2
+    } else if (code & 0xF0) == 0xE0 {
+      //是3个字节的格式  0800 - FFFF 1110xxxx 10xxxxxx 10xxxxxx
+      let code2 = bin[idx + 1].to_int()
+      let code3 = bin[idx + 2].to_int()
+      strArr.push(
+        Char::from_int(
+          ((code & 0x0F) << 12) | ((code2 & 0x3F) << 6) | (code3 & 0x3F),
+        ),
+      )
+      idx = idx + 3
+    } else {
+      raise ConvertError("无效的Utf8编码")
+    }
   }
-  { parent, data: VT_Ext(value=bytes, extType~) }
+  String::from_array(strArr)
+}
+
+fn binReader(bin : Array[Byte], offset : Int, binLen : Int) -> Array[Byte] {
+  let result = Array::new()
+  bin.blit_to(result, len=binLen, src_offset=offset)
+  result
+}
+
+pub fn MsgPackParser::newparser_with_str_array(
+  shareBinary : Bool,
+  binary : Array[Byte]
+) -> MsgPackParser[String, Array[Byte]] {
+  {
+    _packData: binary,
+    shareBinary,
+    _offset: 0,
+    stringReader: read_utf8string,
+    binReader,
+  }
+}
+
+fn bytesReader(bin : Bytes, offset : Int, binLen : Int) -> Bytes {
+  let result = Bytes::new(binLen)
+  result.blit(0, bin, offset, binLen)
+  result
+}
+
+fn read_utf8string_fromBytes(
+  bin : Bytes,
+  offset : Int,
+  l : Int
+) -> String!ConvertError {
+  let strArr : Array[Char] = Array::new()
+  let mut idx = offset
+  let l = offset + l
+  while idx < l {
+    let code = bin[idx].to_int()
+    if (code & 0x80) == 0 {
+      strArr.push(Char::from_int(code))
+      idx = idx + 1
+    } else if (code & 0xE0) == 0xC0 {
+      //是2个字节的格式 0080 - 07FF 110xxxxx 10xxxxxx
+      let code2 = bin[idx + 1].to_int()
+      strArr.push(Char::from_int(((code & 0x1F) << 6) | (code2 & 0x3F)))
+      idx = idx + 2
+    } else if (code & 0xF0) == 0xE0 {
+      //是3个字节的格式  0800 - FFFF 1110xxxx 10xxxxxx 10xxxxxx
+      let code2 = bin[idx + 1].to_int()
+      let code3 = bin[idx + 2].to_int()
+      strArr.push(
+        Char::from_int(
+          ((code & 0x0F) << 12) | ((code2 & 0x3F) << 6) | (code3 & 0x3F),
+        ),
+      )
+      idx = idx + 3
+    } else {
+      raise ConvertError("无效的Utf8编码")
+    }
+  }
+  String::from_array(strArr)
+}
+
+pub fn MsgPackParser::newparser_with_str_bytes(
+  shareBinary : Bool,
+  binary : Bytes
+) -> MsgPackParser[String, Bytes] {
+  {
+    _packData: binary,
+    shareBinary,
+    _offset: 0,
+    stringReader: read_utf8string_fromBytes,
+    binReader: bytesReader,
+  }
 }
 
 test "parse" {
   let b : Array[Byte] = [
-    133, 164, 110, 97, 109, 101, 169, 228, 184, 141, 229, 190, 151, 233, 151, 178,
+    134, 164, 110, 97, 109, 101, 169, 228, 184, 141, 229, 190, 151, 233, 151, 178,
     163, 97, 103, 101, 40, 163, 109, 101, 110, 195, 163, 110, 111, 119, 203, 64,
-    230, 69, 243, 103, 35, 148, 161, 165, 97, 114, 114, 97, 121, 146, 34, 205, 1,
+    230, 69, 246, 246, 72, 195, 95, 167, 99, 117, 114, 116, 105, 109, 101, 215, 255,
+    69, 36, 64, 76, 103, 60, 86, 173, 165, 97, 114, 114, 97, 121, 146, 34, 205, 1,
     89,
   ]
-  let parser = MsgPackParser::new(false, b)
+  let parser : MsgPackParser[String, Array[Byte]] = MsgPackParser::newparser_with_str_array(
+    true, b,
+  )
   match parser.parser?() {
     Ok(result) => println(result.to_string())
     _ => println("error")
