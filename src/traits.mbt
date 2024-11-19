@@ -270,9 +270,6 @@ pub(open) trait IBinary: Show {
   read_int64(Self, Int, Bool) -> Int64
   read_float(Self, Int) -> Float
   read_double(Self, Int) -> Double
-  //create_utf16_str(Self) -> IUtf16StringBuilder
-  //read_utf8(Self, Int, Int) -> IString!ConvertError
-  //read_utf8string(Self, Int, Int) -> String!ConvertError
 }
 
 pub(open) trait ICopy: IBinary {

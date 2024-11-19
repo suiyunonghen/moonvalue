@@ -764,7 +764,12 @@ test "parse" {
     true, b,
   )
   match parser.parser?() {
-    Ok(result) => println(result.to_string())
+    Ok(result) => {
+      assert_eq!(result.string_by_key("name", ""), "不得闲")
+      assert_eq!(result.bool_by_key("men", false), true)
+      assert_eq!(result.value_by_key("array").unwrap().int_by_index(1, 0), 345)
+      println(result.to_string())
+    }
     _ => println("error")
   }
 }

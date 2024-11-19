@@ -24,7 +24,29 @@ println(v.to_string())
 println(c["year"].unwrap().parent().unwrap().to_string())
 ```
 # read moonvalue
-Not yet completed
+A function similar to xxx-by_key reads data from the map type  
+eg.
+> string_by_key read string from map  
+> bool_by_key read bool from map
+> value_by_key return MoonValue from map  
+
+A function similar to xxx-by_index reads data from an array  
+eg.
+> string_by_index read string from array
+> bool_by_index read bool from array
+> value_by_index return MoonValue from array
+
+as_xxx retrieves the value from Moonvalue 
+eg.
+> as_bool
+> as_double
+
+```
+assert_eq!(result.string_by_key("name",""),"不得闲")
+assert_eq!(result.bool_by_key("men",false),true)
+assert_eq!(result.value_by_key("array").unwrap().int_by_index(1,0),345)
+println(result.to_string())
+```
 
 # decode msgpack
 You can use the _MsgPackParser::new_ function to parse the binary data of a msgpack. The parameter shareBinary indicates whether to share binary content. If enabled, VT-ShareString will be used,

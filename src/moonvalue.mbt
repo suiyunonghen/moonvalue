@@ -61,22 +61,314 @@ pub fn as_double[T : IString + Hash + Eq, B : IBinary](
         Ok(result) => result
         _ => default
       }
+    VT_ShareString(value~) =>
+      match @strconv.parse_double?(value.string()) {
+        Ok(result) => result
+        _ => default
+      }
+    _ => default
+  }
+}
+
+pub fn as_datetime[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B],
+  default~ : @datetime.DateTime = 0
+) -> @datetime.DateTime {
+  match self.data {
+    VT_DateTime(value~) => value
+    // VT_Int(value=v) => v.to_double()
+    // VT_Double(value=v) => v
+    // VT_Float(value=v) => v.to_double()
+    // VT_True => 1
+    // VT_False => 0
+    // VT_String(value=v) =>
+    //   match @strconv.parse_double?(IString::to_string(v)) {
+    //     Ok(result) => result
+    //     _ => default
+    //   }
+    // VT_ShareString(value~)=>
+    //   match @strconv.parse_double?(value.string()) {
+    //     Ok(result) => result
+    //     _ => default
+    //   }  
+    _ => default
+  }
+}
+
+pub fn value_by_key[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B],
+  key : T
+) -> MoonValue[T, B]? {
+  match self.data {
+    VT_Obj(value=map) => map[key]
+    VT_IntKeyObj(value=map) =>
+      match @strconv.parse_int64?(key.to_string()) {
+        Ok(intKey) => map[intKey]
+        _ => None
+      }
+    VT_Array(value=arr) =>
+      match @strconv.parse_int?(key.to_string()) {
+        Ok(index) =>
+          if index >= 0 && index < arr.length() {
+            Some(arr[index])
+          } else {
+            None
+          }
+        _ => None
+      }
+    _ => None
+  }
+}
+
+pub fn value_by_index[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B],
+  index : Int
+) -> MoonValue[T, B]? {
+  match self.data {
+    VT_Array(value=arr) =>
+      if index >= 0 && index < arr.length() {
+        Some(arr[index])
+      } else {
+        None
+      }
+    VT_IntKeyObj(value=map) => map[index.to_int64()]
+    _ => None
+  }
+}
+
+pub fn string_by_key[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B],
+  key : T,
+  default : T
+) -> T {
+  match self.value_by_key(key) {
+    Some(result) =>
+      match result.data {
+        VT_String(value=str) => str
+        VT_ShareString(value=str) =>
+          match str.value?() {
+            Ok(str) => str
+            _ => default
+          }
+        _ => default
+      }
+    _ => default
+  }
+}
+
+pub fn str_by_key[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B],
+  key : T,
+  default : String
+) -> String {
+  match self.value_by_key(key) {
+    Some(result) =>
+      match result.data {
+        VT_String(value=str) => str.to_string()
+        VT_ShareString(value=str) =>
+          match str.value?() {
+            Ok(str) => str.to_string()
+            _ => default
+          }
+        VT_Int(value=v) => v.to_string()
+        VT_Double(value=v) => v.to_string()
+        VT_Float(value=v) => v.to_string()
+        VT_True => "true"
+        VT_False => "false"
+        VT_DateTime(value=v) => Show::to_string(v)
+        _ => default
+      }
+    _ => default
+  }
+}
+
+pub fn str_by_index[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B],
+  index : Int,
+  default : String
+) -> String {
+  match self.value_by_index(index) {
+    Some(value) =>
+      match value.data {
+        VT_String(value=v) => v.to_string()
+        VT_ShareString(value=v) =>
+          match v.value?() {
+            Ok(str) => str.to_string()
+            _ => default
+          }
+        VT_Int(value=v) => v.to_string()
+        VT_Double(value=v) => v.to_string()
+        VT_Float(value=v) => v.to_string()
+        VT_True => "true"
+        VT_False => "false"
+        VT_DateTime(value=v) => Show::to_string(v)
+        _ => default
+      }
+    _ => default
+  }
+}
+
+pub fn string_by_index[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B],
+  index : Int,
+  default : T
+) -> T {
+  match self.value_by_index(index) {
+    Some(result) =>
+      match result.data {
+        VT_String(value=str) => str
+        VT_ShareString(value=str) =>
+          match str.value?() {
+            Ok(str) => str
+            _ => default
+          }
+        _ => default
+      }
+    _ => default
+  }
+}
+
+pub fn int_by_key[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B],
+  key : T,
+  default : Int64
+) -> Int64 {
+  match self.value_by_key(key) {
+    Some(result) => result.as_int()
+    _ => default
+  }
+}
+
+pub fn bool_by_key[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B],
+  key : T,
+  default : Bool
+) -> Bool {
+  match self.value_by_key(key) {
+    Some(result) => result.as_bool(default~)
+    _ => default
+  }
+}
+
+pub fn double_by_key[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B],
+  key : T,
+  default : Double
+) -> Double {
+  match self.value_by_key(key) {
+    Some(result) => result.as_double(default~)
+    _ => default
+  }
+}
+
+pub fn datetime_by_key[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B],
+  key : T,
+  default : @datetime.DateTime
+) -> @datetime.DateTime {
+  match self.value_by_key(key) {
+    Some(result) => result.as_datetime(default~)
+    _ => default
+  }
+}
+
+pub fn int_by_index[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B],
+  index : Int,
+  default : Int64
+) -> Int64 {
+  match self.value_by_index(index) {
+    Some(result) => result.as_int()
+    _ => default
+  }
+}
+
+pub fn bool_by_index[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B],
+  index : Int,
+  default : Bool
+) -> Bool {
+  match self.value_by_index(index) {
+    Some(result) => result.as_bool(default~)
+    _ => default
+  }
+}
+
+pub fn double_by_index[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B],
+  index : Int,
+  default : Double
+) -> Double {
+  match self.value_by_index(index) {
+    Some(result) => result.as_double(default~)
+    _ => default
+  }
+}
+
+pub fn datetime_by_index[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B],
+  index : Int,
+  default : @datetime.DateTime
+) -> @datetime.DateTime {
+  match self.value_by_index(index) {
+    Some(result) => result.as_datetime(default~)
+    _ => default
+  }
+}
+
+pub fn as_string[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B],
+  default~ : T
+) -> T {
+  match self.data {
+    VT_String(value=v) => v
+    VT_ShareString(value=v) =>
+      match v.value?() {
+        Ok(str) => str
+        _ => default
+      }
+    _ => default
+  }
+}
+
+pub fn as_str[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B],
+  default~ : String
+) -> String {
+  match self.data {
+    VT_String(value=v) => v.to_string()
+    VT_ShareString(value=v) =>
+      match v.value?() {
+        Ok(str) => str.to_string()
+        _ => default
+      }
+    VT_Int(value=v) => v.to_string()
+    VT_Double(value=v) => v.to_string()
+    VT_Float(value=v) => v.to_string()
+    VT_True => "true"
+    VT_False => "false"
+    VT_DateTime(value=v) => Show::to_string(v)
     _ => default
   }
 }
 
 pub fn as_int[T : IString + Hash + Eq, B : IBinary](
   self : MoonValue[T, B],
-  default~ : Int = 0
-) -> Int {
+  default~ : Int64 = 0
+) -> Int64 {
   match self.data {
-    VT_Int(value=v) => v.to_int()
-    VT_Double(value=v) => v.to_int()
-    VT_Float(value=v) => v.to_double().to_int()
+    VT_Int(value=v) => v
+    VT_Double(value=v) => v.to_int64()
+    VT_Float(value=v) => v.to_double().to_int64()
     VT_True => 1
     VT_False => 0
     VT_String(value=v) =>
-      match @strconv.parse_int?(IString::to_string(v)) {
+      match @strconv.parse_int64?(IString::to_string(v)) {
+        Ok(result) => result
+        _ => default
+      }
+    VT_ShareString(value=v) =>
+      match @strconv.parse_int64?(v.string()) {
         Ok(result) => result
         _ => default
       }
@@ -97,6 +389,11 @@ pub fn as_bool[T : IString + Hash + Eq, B : IBinary](
     VT_Float(value~) => value != 0
     VT_String(value~) =>
       match @strconv.parse_bool?(IString::to_string(value)) {
+        Ok(b) => b
+        _ => default
+      }
+    VT_ShareString(value~) =>
+      match @strconv.parse_bool?(value.string()) {
         Ok(b) => b
         _ => default
       }
@@ -1046,7 +1343,7 @@ pub fn convert2IntKV[T : IString + Hash + Eq, B : IBinary](
   self.data = VT_IntKeyObj(value={})
 }
 
-pub fn convert2Bool[T : IString + Hash + Eq, B : IBinary](
+pub fn set_bool[T : IString + Hash + Eq, B : IBinary](
   self : MoonValue[T, B],
   value : Bool
 ) -> Unit {
@@ -1057,31 +1354,45 @@ pub fn convert2Bool[T : IString + Hash + Eq, B : IBinary](
   }
 }
 
-pub fn convert2Int[T : IString + Hash + Eq, B : IBinary](
+pub fn set_int[T : IString + Hash + Eq, B : IBinary](
   self : MoonValue[T, B],
   value : Int64
 ) -> Unit {
   self.data = VT_Int(value~)
 }
 
-pub fn convert2Null[T : IString + Hash + Eq, B : IBinary](
+pub fn set_nil[T : IString + Hash + Eq, B : IBinary](
   self : MoonValue[T, B]
 ) -> Unit {
   self.data = VT_Null
 }
 
-pub fn convert2Double[T : IString + Hash + Eq, B : IBinary](
+pub fn set_double[T : IString + Hash + Eq, B : IBinary](
   self : MoonValue[T, B],
   value : Double
 ) -> Unit {
   self.data = VT_Double(value~)
 }
 
-pub fn convert2Float[T : IString + Hash + Eq, B : IBinary](
+pub fn set_float[T : IString + Hash + Eq, B : IBinary](
   self : MoonValue[T, B],
   value : Float
 ) -> Unit {
   self.data = VT_Float(value~)
+}
+
+pub fn set_datetime[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B],
+  value : @datetime.DateTime
+) -> Unit {
+  self.data = VT_DateTime(value~)
+}
+
+pub fn set_string[T : IString + Hash + Eq, B : IBinary](
+  self : MoonValue[T, B],
+  value : T
+) -> Unit {
+  self.data = VT_String(value~)
 }
 
 pub fn convert2Array[T : IString + Hash + Eq, B : IBinary](
