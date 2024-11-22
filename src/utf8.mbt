@@ -38,6 +38,7 @@ pub fn utf16_utf8(str : String) -> Array[Byte]!ConvertError {
   result
 }
 
+
 pub fn utf8_utf16(utf8Arr : ArrayView[Byte]) -> String!ConvertError {
   let strArr : Array[Char] = Array::new()
   let l = utf8Arr.length()
@@ -70,7 +71,7 @@ pub fn utf8_utf16(utf8Arr : ArrayView[Byte]) -> String!ConvertError {
 }
 
 test "utft8" {
-  let arr = utf16_utf8?("不得闲测试").unwrap()
+  let arr = utf16_utf8?("不得闲测试").unwrap()  
   println(arr)
   let str = utf8_utf16?(arr[0:])
   println(str.unwrap())

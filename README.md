@@ -70,3 +70,12 @@ match parser.parser?() {
   _ => println("error")
 }
 ```
+
+# encode msgpack
+you can use MsgpackEncoder
+```
+let w: Array[Byte] = Array::new()
+let encoder = MsgpackEncoder::new(w)
+encoder.encode(result)
+println(w)
+```

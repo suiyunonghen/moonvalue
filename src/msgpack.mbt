@@ -46,7 +46,7 @@ struct MsgPackParser[T, B] {
   mut _offset : Int
 }
 
-fn MsgPackParser::new[T : IString + Hash + Eq, B : IBinary](
+fn MsgPackParser::new[T : IString + Hash + Eq, B : IBinReader](
   shareBinary : Bool,
   binary : B,
   utf8Reader : (B, Int, Int) -> T!ConvertError,
@@ -61,7 +61,7 @@ fn MsgPackParser::new[T : IString + Hash + Eq, B : IBinary](
   }
 }
 
-fn detectionFmtCode[T : IString + Hash + Eq, B : IBinary](
+fn detectionFmtCode[T : IString + Hash + Eq, B : IBinReader](
   self : MsgPackParser[T, B]
 ) -> MsgPackFormatCode {
   let formatCode = self._packData.read_byte(self._offset)
@@ -124,7 +124,7 @@ fn detectionFmtCode[T : IString + Hash + Eq, B : IBinary](
   }
 }
 
-fn parse_u8[T : IString + Hash + Eq, B : IBinary](
+fn parse_u8[T : IString + Hash + Eq, B : IBinReader](
   self : MsgPackParser[T, B]
 ) -> Int {
   let result = self._packData.read_byte(self._offset).to_int()
@@ -132,7 +132,7 @@ fn parse_u8[T : IString + Hash + Eq, B : IBinary](
   result
 }
 
-fn parse_i8[T : IString + Hash + Eq, B : IBinary](
+fn parse_i8[T : IString + Hash + Eq, B : IBinReader](
   self : MsgPackParser[T, B]
 ) -> Int {
   let mut result = self._packData.read_byte(self._offset).to_int()
@@ -143,7 +143,7 @@ fn parse_i8[T : IString + Hash + Eq, B : IBinary](
   result
 }
 
-fn parse_u16[T : IString + Hash + Eq, B : IBinary](
+fn parse_u16[T : IString + Hash + Eq, B : IBinReader](
   self : MsgPackParser[T, B]
 ) -> Int {
   let result = self._packData.read_int16(self._offset, false)
@@ -151,7 +151,7 @@ fn parse_u16[T : IString + Hash + Eq, B : IBinary](
   result
 }
 
-fn parse_i16[T : IString + Hash + Eq, B : IBinary](
+fn parse_i16[T : IString + Hash + Eq, B : IBinReader](
   self : MsgPackParser[T, B]
 ) -> Int {
   let mut result = self._packData.read_int16(self._offset, false)
@@ -162,9 +162,9 @@ fn parse_i16[T : IString + Hash + Eq, B : IBinary](
   result
 }
 
-fn parse_u32[T : IString + Hash + Eq, B : IBinary](
+fn parse_u32[T : IString + Hash + Eq, B : IBinReader](
   self : MsgPackParser[T, B]
-) -> UInt {
+) -> UInt {  
   let result = self._packData
     .read_int32(self._offset, false)
     .reinterpret_as_uint()
@@ -172,7 +172,7 @@ fn parse_u32[T : IString + Hash + Eq, B : IBinary](
   result
 }
 
-fn parse_u64[T : IString + Hash + Eq, B : IBinary](
+fn parse_u64[T : IString + Hash + Eq, B : IBinReader](
   self : MsgPackParser[T, B]
 ) -> UInt64 {
   let result = self._packData
@@ -182,7 +182,7 @@ fn parse_u64[T : IString + Hash + Eq, B : IBinary](
   result
 }
 
-fn parse_float[T : IString + Hash + Eq, B : IBinary](
+fn parse_float[T : IString + Hash + Eq, B : IBinReader](
   self : MsgPackParser[T, B]
 ) -> Float {
   let result = self._packData.read_float(self._offset)
@@ -190,7 +190,7 @@ fn parse_float[T : IString + Hash + Eq, B : IBinary](
   result
 }
 
-fn parse_double[T : IString + Hash + Eq, B : IBinary](
+fn parse_double[T : IString + Hash + Eq, B : IBinReader](
   self : MsgPackParser[T, B]
 ) -> Double {
   let result = self._packData.read_double(self._offset)
@@ -198,7 +198,7 @@ fn parse_double[T : IString + Hash + Eq, B : IBinary](
   result
 }
 
-pub fn parser[T : IString + Hash + Eq, B : IBinary](
+pub fn parser[T : IString + Hash + Eq, B : IBinReader](
   self : MsgPackParser[T, B]
 ) -> MoonValue[T, B]!MsgPackParserError {
   self.parse_value!(self.detectionFmtCode(), None, KeyInfo::NoKey_or_Array)
@@ -218,7 +218,7 @@ pub(all) type! MsgPackParserError {
   ErrorIntKey(String)
 }
 
-fn parse_key[T : IString + Hash + Eq, B : IBinary](
+fn parse_key[T : IString + Hash + Eq, B : IBinReader](
   self : MsgPackParser[T, B]
 ) -> T!MsgPackParserError {
   let code = self.detectionFmtCode()
@@ -239,7 +239,7 @@ fn parse_key[T : IString + Hash + Eq, B : IBinary](
   }
 }
 
-fn parse_intKey[T : IString + Hash + Eq, B : IBinary](
+fn parse_intKey[T : IString + Hash + Eq, B : IBinReader](
   self : MsgPackParser[T, B]
 ) -> Int64!MsgPackParserError {
   let code = self.detectionFmtCode()
@@ -256,7 +256,7 @@ fn parse_intKey[T : IString + Hash + Eq, B : IBinary](
   }
 }
 
-fn parse_value[T : IString + Hash + Eq, B : IBinary](
+fn parse_value[T : IString + Hash + Eq, B : IBinReader](
   self : MsgPackParser[T, B],
   fmtCode : MsgPackFormatCode,
   parent : MoonValue[T, B]?,
@@ -272,8 +272,7 @@ fn parse_value[T : IString + Hash + Eq, B : IBinary](
         let strMap = match parent {
           Some(p) =>
             match key {
-              Str(keyStr) => {
-                println(keyStr.to_string())
+              Str(keyStr) => {                
                 p.add_key_object(keyStr, StrMap)
               }
               IntKey(intKey) => p.add_intkey_object(intKey, StrMap)
@@ -587,12 +586,12 @@ fn parse_value[T : IString + Hash + Eq, B : IBinary](
     }
     FmtCodeFixExt8(extType=extype) => {
       if extype == -1 {
-        //64位时间
-        let mut sec = self.parse_u64()
+        //64位时间        
+        let mut sec = self.parse_u64()        
         let nsec = sec >> 34 //纳秒
         sec = sec & 0x00000003ffffffff //秒
         let ms = (sec * 1000 + nsec / 1000000).reinterpret_as_int64()
-        let date = @datetime.from_unix_mseconds(ms)
+        let date = @datetime.from_unix_mseconds(ms)        
         match parent {
           Some(p) =>
             match key {
@@ -610,7 +609,7 @@ fn parse_value[T : IString + Hash + Eq, B : IBinary](
   }
 }
 
-fn parse_ext[T : IString + Hash + Eq, B : IBinary](
+fn parse_ext[T : IString + Hash + Eq, B : IBinReader](
   self : MsgPackParser[T, B],
   parent : MoonValue[T, B]?,
   key : KeyInfo[T],
@@ -752,6 +751,300 @@ pub fn MsgPackParser::newparser_with_str_bytes(
   }
 }
 
+struct MsgpackEncoder{
+  writer: IBinWriter
+}
+
+pub fn MsgpackEncoder::new(writer: IBinWriter)->MsgpackEncoder{
+  {
+    writer,
+  }
+}
+
+fn encode_int(self: MsgpackEncoder,v: Int64)->Unit{
+  if v >= 0{
+    if v < 128{
+      self.writer.append_byte(v.to_byte())
+    }else if v <= 255{
+      self.writer.append_byte(0xcc)
+      self.writer.append_byte(v.to_byte())
+    }else if v <= 65535{
+      self.writer.append_byte(0xcd)
+      self.writer.append_byte((v >> 8).to_byte())
+      self.writer.append_byte(v.to_byte())
+    }else if v <= 4294967295{
+      //(1<<32) - 1)
+      self.writer.append_byte(0xce)
+      self.writer.append_byte((v >> 24).to_byte())
+      self.writer.append_byte((v >> 16).to_byte())
+      self.writer.append_byte((v >> 8).to_byte())
+      self.writer.append_byte(v.to_byte())
+    }else{
+      self.writer.append_byte(0xcf)
+      self.writer.append_byte((v >> 56).to_byte())
+      self.writer.append_byte((v >> 48).to_byte())
+      self.writer.append_byte((v >> 40).to_byte())
+      self.writer.append_byte((v >> 32).to_byte())
+      self.writer.append_byte((v >> 24).to_byte())
+      self.writer.append_byte((v >> 16).to_byte())
+      self.writer.append_byte((v >> 8).to_byte())
+      self.writer.append_byte((v).to_byte())
+    }
+    return
+  }
+  if v >= -32{
+    self.writer.append_byte(v.to_byte())
+  }else if v >= -128{
+    self.writer.append_byte(0xd0)
+    self.writer.append_byte(v.to_byte())
+  }else if v >= -32768{
+    self.writer.append_byte(0xd1)
+    self.writer.append_byte((v >> 8).to_byte())
+    self.writer.append_byte(v.to_byte())
+  }else if v >= -2147483648{
+    self.writer.append_byte(0xd2)
+    self.writer.append_byte((v >> 24).to_byte())
+    self.writer.append_byte((v >> 16).to_byte())
+    self.writer.append_byte((v >> 8).to_byte())
+    self.writer.append_byte(v.to_byte())
+  }else{
+    self.writer.append_byte(0xd3)
+    self.writer.append_byte((v >> 56).to_byte())
+    self.writer.append_byte((v >> 48).to_byte())
+    self.writer.append_byte((v >> 40).to_byte())
+    self.writer.append_byte((v >> 32).to_byte())
+    self.writer.append_byte((v >> 24).to_byte())
+    self.writer.append_byte((v >> 16).to_byte())
+    self.writer.append_byte((v >> 8).to_byte())
+    self.writer.append_byte(v.to_byte())
+  }
+}
+
+fn encode_string[T : IString + Hash + Eq](self: MsgpackEncoder,str: T)->Unit{
+  let utf8Bytes = str.to_utf8?().unwrap()
+  let strLen = utf8Bytes.length()  
+  if strLen < 32{
+    self.writer.append_byte((0xa0 | strLen).to_byte())
+  }else if strLen < 256{
+    self.writer.append_byte((0xd9).to_byte())
+    self.writer.append_byte((strLen).to_byte())
+  }else if strLen < 65536{
+    self.writer.append_byte(0xda)
+    self.writer.append_byte((strLen >> 8).to_byte())
+    self.writer.append_byte((strLen).to_byte())
+  }else{
+    self.writer.append_byte(0xdb)
+    self.writer.append_byte((strLen >> 24).to_byte())
+    self.writer.append_byte((strLen >> 16).to_byte())
+    self.writer.append_byte((strLen >> 8).to_byte())
+    self.writer.append_byte(strLen.to_byte())
+  }    
+  for i in 0..<strLen{
+    self.writer.append_byte(utf8Bytes[i])
+  }  
+}
+
+fn encode_share_string[T : IString + Hash + Eq,B : IBinReader](self: MsgpackEncoder,str: StringView[T,B])->Unit{
+  let strLen = str.len
+  if strLen < 32{
+    self.writer.append_byte((0xa0 | strLen).to_byte())
+  }else if strLen < 256{
+    self.writer.append_byte((0xd9).to_byte())
+    self.writer.append_byte((strLen).to_byte())
+  }else if strLen < 65536{
+    self.writer.append_byte(0xda)
+    self.writer.append_byte((strLen >> 8).to_byte())
+    self.writer.append_byte((strLen).to_byte())
+  }else{
+    self.writer.append_byte(0xdb)
+    self.writer.append_byte((strLen >> 24).to_byte())
+    self.writer.append_byte((strLen >> 16).to_byte())
+    self.writer.append_byte((strLen >> 8).to_byte())
+    self.writer.append_byte(strLen.to_byte())
+  }  
+  for i in 0..<strLen{
+    self.writer.append_byte(str._source.read_byte(i+str.from))
+  }  
+}
+
+fn encode_datetime(self: MsgpackEncoder,d: @datetime.DateTime)->Unit{
+  let msecs = d.unix_millseconds()
+  let secs = msecs / 1000
+  if secs >> 34 == 0{    
+    let msecs = ((msecs - secs * 1000)*1000*1000) << 34
+    let secs = secs | msecs
+    if (secs & 0xffffffff00000000) == 0{      
+      //32位日期格式      
+      self.writer.append_byte(0xd6)
+      self.writer.append_byte(0xff)
+      self.writer.append_int32(secs.to_int(),false)
+      return
+    }
+    //64位日期格式      
+    self.writer.append_byte(0xd7)    
+    self.writer.append_byte(0xff)    
+    self.writer.append_int64(secs, false)
+    return
+  }  
+  //96位日期格式
+  self.writer.append_byte(0xc7)  
+  self.writer.append_byte(12)  
+  self.writer.append_byte(0xff)  
+  let mirsecs = (msecs - secs * 1000)*1000*1000 //microseconds
+  self.writer.append_int32(mirsecs.to_int(),false)
+  self.writer.append_int64(secs,false)
+}
+
+fn encode_bin[B : IBinReader](self: MsgpackEncoder,v: B,from: Int,len: Int)->Unit{
+  if len < 256{
+    self.writer.append_byte(0xc4)
+    self.writer.append_byte(len.to_byte())
+  }else if len < 65536{
+    self.writer.append_byte(0xc5)
+    self.writer.append_byte((len >> 8).to_byte())
+    self.writer.append_byte(len.to_byte())
+  }else{
+    self.writer.append_byte(0xc6)
+    self.writer.append_byte((len >> 24).to_byte())
+    self.writer.append_byte((len >> 16).to_byte())
+    self.writer.append_byte((len >> 8).to_byte())
+    self.writer.append_byte(len.to_byte())
+  }
+  for i in from..<from+len{
+    self.writer.append_byte(v.read_byte(i))
+  }
+}
+
+fn encode_ext[B : IBinReader](self: MsgpackEncoder,v: B,from: Int,len: Int,extType: Int)->Unit{
+  match len{
+    1=>{
+      self.writer.append_byte(0xd4)
+      self.writer.append_byte(extType.to_byte())
+    }
+    2=>{
+      self.writer.append_byte(0xd5)
+      self.writer.append_byte(extType.to_byte())
+    }
+    4=>{
+      self.writer.append_byte(0xd6)
+      self.writer.append_byte(extType.to_byte())
+    }
+    8=>{
+      self.writer.append_byte(0xd7)
+      self.writer.append_byte(extType.to_byte())
+    }
+    16=>{
+      self.writer.append_byte(0xd8)
+      self.writer.append_byte(extType.to_byte())
+    }
+    _=>{
+      if len < 256{
+        self.writer.append_byte(0xc7)
+        self.writer.append_byte(len.to_byte())
+        self.writer.append_byte(extType.to_byte())
+      }else if len < 65536{
+        self.writer.append_byte(0xc8)
+        self.writer.append_byte((len>>8).to_byte())
+        self.writer.append_byte(len.to_byte())
+        self.writer.append_byte(extType.to_byte())
+      }else{
+        self.writer.append_byte(0xc9)
+        self.writer.append_byte((len>>24).to_byte())
+        self.writer.append_byte((len>>16).to_byte())
+        self.writer.append_byte((len>>8).to_byte())
+        self.writer.append_byte(len.to_byte())
+        self.writer.append_byte(extType.to_byte())
+      }
+    }
+  }
+  for i in from..<from+len{
+    self.writer.append_byte(v.read_byte(i))
+  }
+}
+
+pub fn encode[T : IString + Hash + Eq, B : IBinReader](self: MsgpackEncoder,value: MoonValue[T,B])->Unit{
+  match value.data{
+    VT_Null=>self.writer.append_byte(0xc0)
+    VT_True=>self.writer.append_byte(0xc3)
+    VT_False=>self.writer.append_byte(0xc2)    
+    VT_Int(value~)=>self.encode_int(value)
+    VT_Float(value~)=>{
+      self.writer.append_byte(0xca)
+      self.writer.append_float(value)
+    }
+    VT_Double(value~)=>{
+      self.writer.append_byte(0xcb)
+      self.writer.append_double(value)
+    }
+    VT_DateTime(value~)=>self.encode_datetime(value)    
+    VT_String(value~)=>self.encode_string(value)
+    VT_ShareString(value~)=>self.encode_share_string(value)    
+    VT_Bin(value~)=>self.encode_bin(value,0,value.length())
+    VT_ShareBin(value~)=>self.encode_bin(value._source,value.from,value.len)
+    VT_Ext(value~,extType~)=>self.encode_ext(value,0,value.length(),extType)
+    VT_ShareExt(value~,extType~)=>self.encode_ext(value._source,value.from,value.len,extType)
+    VT_Array(value~)=>{
+      let arrlen = value.length()
+      if arrlen < 16{
+        self.writer.append_byte((0x90 | arrlen).to_byte())
+      }else {
+        if arrlen < 65536{
+          self.writer.append_byte(0xdc)        
+        }else{
+          self.writer.append_byte(0xdd)
+          self.writer.append_byte((arrlen >> 24).to_byte())
+          self.writer.append_byte((arrlen >> 16).to_byte())        
+        }
+        self.writer.append_byte((arrlen >> 8).to_byte())
+        self.writer.append_byte(arrlen.to_byte())
+      }
+      for i in 0..<arrlen{
+        self.encode(value[i])
+      }
+    }
+    VT_Obj(value~)=>{
+      let mapLen =value.size()
+      if mapLen < 16{        
+        self.writer.append_byte((0x80 | mapLen).to_byte())
+      }else {
+        if mapLen < 65536{
+          self.writer.append_byte(0xde)        
+        }else{
+          self.writer.append_byte(0xdf)
+          self.writer.append_byte((mapLen >> 24).to_byte())
+          self.writer.append_byte((mapLen >> 16).to_byte())        
+        }
+        self.writer.append_byte((mapLen >> 8).to_byte())
+        self.writer.append_byte(mapLen.to_byte())
+      }
+      for k,v in value{
+        self.encode_string(k)
+        self.encode(v)
+      }
+    }
+    VT_IntKeyObj(value~)=>{
+      let mapLen =value.size()
+      if mapLen < 16{
+        self.writer.append_byte((0x80 | mapLen).to_byte())
+      }else {
+        if mapLen < 65536{
+          self.writer.append_byte(0xde)        
+        }else{
+          self.writer.append_byte(0xdf)
+          self.writer.append_byte((mapLen >> 24).to_byte())
+          self.writer.append_byte((mapLen >> 16).to_byte())        
+        }
+        self.writer.append_byte((mapLen >> 8).to_byte())
+        self.writer.append_byte(mapLen.to_byte())
+      }
+      for k,v in value{
+        self.encode_int(k)
+        self.encode(v)
+      }
+    }
+  }
+}
+
 test "parse" {
   let b : Array[Byte] = [
     134, 164, 110, 97, 109, 101, 169, 228, 184, 141, 229, 190, 151, 233, 151, 178,
@@ -769,7 +1062,17 @@ test "parse" {
       assert_eq!(result.bool_by_key("men", false), true)
       assert_eq!(result.value_by_key("array").unwrap().int_by_index(1, 0), 345)
       println(result.to_string())
+      let w: Array[Byte] = Array::new()
+      let encoder = MsgpackEncoder::new(w)
+      encoder.encode(result)      
+      let parser : MsgPackParser[String, Array[Byte]] = MsgPackParser::newparser_with_str_array(
+        true, w,
+      )
+      match parser.parser?() {
+        Ok(t)=>println(t.to_string())
+        _=>println("error2")
+      }
     }
     _ => println("error")
-  }
+  }  
 }
