@@ -1,16 +1,3 @@
-pub(open) trait IUtf16StringBuilder {
-  append(Self, Char) -> Unit
-  end_string(Self) -> IString
-}
-
-pub impl IUtf16StringBuilder for Array[Char] with append(self, char : Char) -> Unit {
-  self.push(char)
-}
-
-pub impl IUtf16StringBuilder for Array[Char] with end_string(self) -> IString {
-  String::from_array(self)
-}
-
 pub(open) trait IString {
   charCodeAt(Self, Int) -> Int //utf16编码格式的
   length(Self) -> Int

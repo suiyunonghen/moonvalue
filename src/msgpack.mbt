@@ -1064,7 +1064,7 @@ test "parse" {
       println(result.to_string())
       let w: Array[Byte] = Array::new()
       let encoder = MsgpackEncoder::new(w)
-      encoder.encode(result)      
+      encoder.encode(result)
       let parser : MsgPackParser[String, Array[Byte]] = MsgPackParser::newparser_with_str_array(
         true, w,
       )
