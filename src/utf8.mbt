@@ -1,8 +1,8 @@
-//! UTF8跟UTF16之间转码
-//UCS-2编码    UTF-8 字节流(二进制)
-//0000 - 007F  0xxxxxxx
-//0080 - 07FF 110xxxxx 10xxxxxx
-//0800 - FFFF 1110xxxx 10xxxxxx 10xxxxxx
+///| UTF8跟UTF16之间转码
+///  UCS-2编码    UTF-8 字节流(二进制)
+/// 0000 - 007F  0xxxxxxx
+/// 0080 - 07FF 110xxxxx 10xxxxxx
+/// 0800 - FFFF 1110xxxx 10xxxxxx 10xxxxxx
 
 const UTF8_END1 = 0x007F
 
@@ -16,6 +16,7 @@ const UTF8_END3 = 0xFFFF
 
 pub(all) type! ConvertError String
 
+///|
 pub fn utf16_utf8(str : String) -> Array[Byte]!ConvertError {
   let result = Array::new()
   for char in str {
@@ -38,7 +39,7 @@ pub fn utf16_utf8(str : String) -> Array[Byte]!ConvertError {
   result
 }
 
-
+///|
 pub fn utf8_utf16(utf8Arr : ArrayView[Byte]) -> String!ConvertError {
   let strArr : Array[Char] = Array::new()
   let l = utf8Arr.length()
@@ -71,7 +72,7 @@ pub fn utf8_utf16(utf8Arr : ArrayView[Byte]) -> String!ConvertError {
 }
 
 test "utft8" {
-  let arr = utf16_utf8?("不得闲测试").unwrap()  
+  let arr = utf16_utf8?("不得闲测试").unwrap()
   println(arr)
   let str = utf8_utf16?(arr[0:])
   println(str.unwrap())

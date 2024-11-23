@@ -1,3 +1,7 @@
+///| moonvalue
+/// 
+
+///| data of moonvalue
 pub(all) enum ValueData[T, B] {
   VT_Null
   VT_True
@@ -22,30 +26,35 @@ struct MoonValue[T, B] {
   mut data : ValueData[T, B]
 }
 
+///|
 pub fn MoonValue::new_object[T : IString + Hash + Eq, B : IBinReader](
   data : Map[T, MoonValue[T, B]]
 ) -> MoonValue[T, B] {
   { parent: None, data: VT_Obj(value=data) }
 }
 
+///|
 pub fn MoonValue::new_array[T : IString + Hash + Eq, B : IBinReader](
   arr : Array[MoonValue[T, B]]
 ) -> MoonValue[T, B] {
   { parent: None, data: VT_Array(value=arr) }
 }
 
+///|
 pub fn value[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B]
 ) -> ValueData[T, B] {
   self.data
 }
 
+///|
 pub fn parent[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B]
 ) -> MoonValue[T, B]? {
   self.parent
 }
 
+///|
 pub fn as_double[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B],
   default~ : Double = 0
@@ -70,6 +79,7 @@ pub fn as_double[T : IString + Hash + Eq, B : IBinReader](
   }
 }
 
+///|
 pub fn as_datetime[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B],
   default~ : @datetime.DateTime = 0
@@ -95,6 +105,7 @@ pub fn as_datetime[T : IString + Hash + Eq, B : IBinReader](
   }
 }
 
+///|
 pub fn value_by_key[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B],
   key : T
@@ -120,6 +131,7 @@ pub fn value_by_key[T : IString + Hash + Eq, B : IBinReader](
   }
 }
 
+///|
 pub fn value_by_index[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B],
   index : Int
@@ -136,6 +148,7 @@ pub fn value_by_index[T : IString + Hash + Eq, B : IBinReader](
   }
 }
 
+///|
 pub fn string_by_key[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B],
   key : T,
@@ -156,6 +169,7 @@ pub fn string_by_key[T : IString + Hash + Eq, B : IBinReader](
   }
 }
 
+///|
 pub fn str_by_key[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B],
   key : T,
@@ -182,6 +196,7 @@ pub fn str_by_key[T : IString + Hash + Eq, B : IBinReader](
   }
 }
 
+///|
 pub fn str_by_index[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B],
   index : Int,
@@ -208,6 +223,7 @@ pub fn str_by_index[T : IString + Hash + Eq, B : IBinReader](
   }
 }
 
+///|
 pub fn string_by_index[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B],
   index : Int,
@@ -228,6 +244,7 @@ pub fn string_by_index[T : IString + Hash + Eq, B : IBinReader](
   }
 }
 
+///|
 pub fn int_by_key[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B],
   key : T,
@@ -239,6 +256,7 @@ pub fn int_by_key[T : IString + Hash + Eq, B : IBinReader](
   }
 }
 
+///|
 pub fn bool_by_key[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B],
   key : T,
@@ -250,6 +268,7 @@ pub fn bool_by_key[T : IString + Hash + Eq, B : IBinReader](
   }
 }
 
+///|
 pub fn double_by_key[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B],
   key : T,
@@ -261,6 +280,7 @@ pub fn double_by_key[T : IString + Hash + Eq, B : IBinReader](
   }
 }
 
+///|
 pub fn datetime_by_key[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B],
   key : T,
@@ -272,6 +292,7 @@ pub fn datetime_by_key[T : IString + Hash + Eq, B : IBinReader](
   }
 }
 
+///|
 pub fn int_by_index[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B],
   index : Int,
@@ -283,6 +304,7 @@ pub fn int_by_index[T : IString + Hash + Eq, B : IBinReader](
   }
 }
 
+///|
 pub fn bool_by_index[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B],
   index : Int,
@@ -294,6 +316,7 @@ pub fn bool_by_index[T : IString + Hash + Eq, B : IBinReader](
   }
 }
 
+///|
 pub fn double_by_index[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B],
   index : Int,
@@ -305,6 +328,7 @@ pub fn double_by_index[T : IString + Hash + Eq, B : IBinReader](
   }
 }
 
+///|
 pub fn datetime_by_index[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B],
   index : Int,
@@ -316,6 +340,7 @@ pub fn datetime_by_index[T : IString + Hash + Eq, B : IBinReader](
   }
 }
 
+///|
 pub fn as_string[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B],
   default~ : T
@@ -331,6 +356,7 @@ pub fn as_string[T : IString + Hash + Eq, B : IBinReader](
   }
 }
 
+///|
 pub fn as_str[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B],
   default~ : String
@@ -352,6 +378,7 @@ pub fn as_str[T : IString + Hash + Eq, B : IBinReader](
   }
 }
 
+///|
 pub fn as_int[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B],
   default~ : Int64 = 0
@@ -376,6 +403,7 @@ pub fn as_int[T : IString + Hash + Eq, B : IBinReader](
   }
 }
 
+///|
 pub fn as_bool[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B],
   default~ : Bool
@@ -401,6 +429,7 @@ pub fn as_bool[T : IString + Hash + Eq, B : IBinReader](
   }
 }
 
+///|
 pub fn op_set[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B],
   key : T,
@@ -432,6 +461,7 @@ pub fn op_set[T : IString + Hash + Eq, B : IBinReader](
   }
 }
 
+///|
 pub fn op_get[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B],
   key : T
@@ -452,6 +482,7 @@ pub fn op_get[T : IString + Hash + Eq, B : IBinReader](
   }
 }
 
+///|
 pub fn set_key_int[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B],
   key : T,
@@ -460,6 +491,7 @@ pub fn set_key_int[T : IString + Hash + Eq, B : IBinReader](
   self.set_key_int64(key, v.to_int64())
 }
 
+///|
 pub fn set_key_bool[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B],
   key : T,
@@ -488,6 +520,7 @@ pub fn set_key_bool[T : IString + Hash + Eq, B : IBinReader](
   }
 }
 
+///|
 pub fn set_key_float[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B],
   key : T,
@@ -503,6 +536,7 @@ pub fn set_key_float[T : IString + Hash + Eq, B : IBinReader](
   }
 }
 
+///|
 pub fn set_key_double[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B],
   key : T,
@@ -518,6 +552,7 @@ pub fn set_key_double[T : IString + Hash + Eq, B : IBinReader](
   }
 }
 
+///|
 pub fn set_key_bin[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B],
   key : T,
@@ -533,6 +568,7 @@ pub fn set_key_bin[T : IString + Hash + Eq, B : IBinReader](
   }
 }
 
+///|
 pub fn set_key_share_bin[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B],
   key : T,
@@ -548,6 +584,7 @@ pub fn set_key_share_bin[T : IString + Hash + Eq, B : IBinReader](
   }
 }
 
+///|
 pub fn set_key_datetime[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B],
   key : T,
@@ -563,6 +600,7 @@ pub fn set_key_datetime[T : IString + Hash + Eq, B : IBinReader](
   }
 }
 
+///|
 pub fn set_key_ext[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B],
   key : T,
@@ -580,6 +618,7 @@ pub fn set_key_ext[T : IString + Hash + Eq, B : IBinReader](
   }
 }
 
+///|
 pub fn set_key_share_ext[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B],
   key : T,
@@ -600,6 +639,7 @@ pub fn set_key_share_ext[T : IString + Hash + Eq, B : IBinReader](
   }
 }
 
+///|
 pub fn set_intkey_ext[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B],
   key : Int64,
@@ -617,6 +657,7 @@ pub fn set_intkey_ext[T : IString + Hash + Eq, B : IBinReader](
   }
 }
 
+///|
 pub fn set_intkey_share_ext[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B],
   key : Int64,
@@ -637,6 +678,7 @@ pub fn set_intkey_share_ext[T : IString + Hash + Eq, B : IBinReader](
   }
 }
 
+///|
 pub fn set_index_ext[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B],
   index : Int,
@@ -654,6 +696,7 @@ pub fn set_index_ext[T : IString + Hash + Eq, B : IBinReader](
   }
 }
 
+///|
 pub fn set_index_share_ext[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B],
   index : Int,
@@ -671,6 +714,7 @@ pub fn set_index_share_ext[T : IString + Hash + Eq, B : IBinReader](
   }
 }
 
+///|
 pub fn set_intkey_float[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B],
   key : Int64,
@@ -686,6 +730,7 @@ pub fn set_intkey_float[T : IString + Hash + Eq, B : IBinReader](
   }
 }
 
+///|
 pub fn set_intkey_bin[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B],
   key : Int64,
@@ -701,6 +746,7 @@ pub fn set_intkey_bin[T : IString + Hash + Eq, B : IBinReader](
   }
 }
 
+///|
 pub fn set_intkey_share_bin[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B],
   key : Int64,
@@ -716,6 +762,7 @@ pub fn set_intkey_share_bin[T : IString + Hash + Eq, B : IBinReader](
   }
 }
 
+///|
 pub fn set_intkey_datetime[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B],
   key : Int64,
@@ -731,6 +778,7 @@ pub fn set_intkey_datetime[T : IString + Hash + Eq, B : IBinReader](
   }
 }
 
+///|
 pub fn set_intkey_double[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B],
   key : Int64,
@@ -746,6 +794,7 @@ pub fn set_intkey_double[T : IString + Hash + Eq, B : IBinReader](
   }
 }
 
+///|
 pub fn set_key_string[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B],
   key : T,
@@ -761,6 +810,7 @@ pub fn set_key_string[T : IString + Hash + Eq, B : IBinReader](
   }
 }
 
+///|
 pub fn set_key_share_string[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B],
   key : T,
@@ -777,6 +827,7 @@ pub fn set_key_share_string[T : IString + Hash + Eq, B : IBinReader](
   }
 }
 
+///|
 pub fn set_intkey_string[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B],
   key : Int64,
@@ -792,6 +843,7 @@ pub fn set_intkey_string[T : IString + Hash + Eq, B : IBinReader](
   }
 }
 
+///|
 pub fn set_intkey_share_string[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B],
   key : Int64,
@@ -808,6 +860,7 @@ pub fn set_intkey_share_string[T : IString + Hash + Eq, B : IBinReader](
   }
 }
 
+///|
 pub fn set_intkey_bool[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B],
   key : Int64,
@@ -836,6 +889,7 @@ pub fn set_intkey_bool[T : IString + Hash + Eq, B : IBinReader](
   }
 }
 
+///|
 pub fn set_intkey_int64[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B],
   key : Int64,
@@ -851,6 +905,7 @@ pub fn set_intkey_int64[T : IString + Hash + Eq, B : IBinReader](
   }
 }
 
+///|
 pub fn set_key_int64[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B],
   key : T,
@@ -872,6 +927,7 @@ pub(all) enum CompValueType {
   Array
 }
 
+///|
 pub fn add_key_object[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B],
   key : T,
@@ -1011,6 +1067,7 @@ pub fn add_key_object[T : IString + Hash + Eq, B : IBinReader](
   result
 }
 
+///|
 pub fn add_intkey_object[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B],
   key : Int64,
@@ -1142,6 +1199,7 @@ pub fn add_intkey_object[T : IString + Hash + Eq, B : IBinReader](
   result
 }
 
+///|
 pub fn add_arr_object[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B],
   valueType : CompValueType
@@ -1181,6 +1239,7 @@ pub fn add_arr_object[T : IString + Hash + Eq, B : IBinReader](
   result
 }
 
+///|
 pub fn set_index_string[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B],
   index : Int,
@@ -1197,6 +1256,7 @@ pub fn set_index_string[T : IString + Hash + Eq, B : IBinReader](
   }
 }
 
+///|
 pub fn set_index_share_string[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B],
   index : Int,
@@ -1213,6 +1273,7 @@ pub fn set_index_share_string[T : IString + Hash + Eq, B : IBinReader](
   }
 }
 
+///|
 pub fn set_index_bin[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B],
   index : Int,
@@ -1229,6 +1290,7 @@ pub fn set_index_bin[T : IString + Hash + Eq, B : IBinReader](
   }
 }
 
+///|
 pub fn set_index_share_bin[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B],
   index : Int,
@@ -1245,6 +1307,7 @@ pub fn set_index_share_bin[T : IString + Hash + Eq, B : IBinReader](
   }
 }
 
+///|
 pub fn set_index_date[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B],
   index : Int,
@@ -1261,6 +1324,7 @@ pub fn set_index_date[T : IString + Hash + Eq, B : IBinReader](
   }
 }
 
+///|
 pub fn set_index_float[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B],
   index : Int,
@@ -1277,6 +1341,7 @@ pub fn set_index_float[T : IString + Hash + Eq, B : IBinReader](
   }
 }
 
+///|
 pub fn set_index_double[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B],
   index : Int,
@@ -1293,6 +1358,7 @@ pub fn set_index_double[T : IString + Hash + Eq, B : IBinReader](
   }
 }
 
+///|
 pub fn set_index_bool[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B],
   index : Int,
@@ -1315,6 +1381,7 @@ pub fn set_index_bool[T : IString + Hash + Eq, B : IBinReader](
   }
 }
 
+///|
 pub fn set_index_int64[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B],
   index : Int,
@@ -1331,18 +1398,21 @@ pub fn set_index_int64[T : IString + Hash + Eq, B : IBinReader](
   }
 }
 
+///|
 pub fn convert2KV[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B]
 ) -> Unit {
   self.data = VT_Obj(value={})
 }
 
+///|
 pub fn convert2IntKV[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B]
 ) -> Unit {
   self.data = VT_IntKeyObj(value={})
 }
 
+///|
 pub fn set_bool[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B],
   value : Bool
@@ -1354,6 +1424,7 @@ pub fn set_bool[T : IString + Hash + Eq, B : IBinReader](
   }
 }
 
+///|
 pub fn set_int[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B],
   value : Int64
@@ -1361,12 +1432,14 @@ pub fn set_int[T : IString + Hash + Eq, B : IBinReader](
   self.data = VT_Int(value~)
 }
 
+///|
 pub fn set_nil[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B]
 ) -> Unit {
   self.data = VT_Null
 }
 
+///|
 pub fn set_double[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B],
   value : Double
@@ -1374,6 +1447,7 @@ pub fn set_double[T : IString + Hash + Eq, B : IBinReader](
   self.data = VT_Double(value~)
 }
 
+///|
 pub fn set_float[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B],
   value : Float
@@ -1381,6 +1455,7 @@ pub fn set_float[T : IString + Hash + Eq, B : IBinReader](
   self.data = VT_Float(value~)
 }
 
+///|
 pub fn set_datetime[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B],
   value : @datetime.DateTime
@@ -1388,6 +1463,7 @@ pub fn set_datetime[T : IString + Hash + Eq, B : IBinReader](
   self.data = VT_DateTime(value~)
 }
 
+///|
 pub fn set_string[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B],
   value : T
@@ -1395,19 +1471,24 @@ pub fn set_string[T : IString + Hash + Eq, B : IBinReader](
   self.data = VT_String(value~)
 }
 
+///|
 pub fn convert2Array[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B]
 ) -> Unit {
   self.data = VT_Array(value=[])
 }
 
-fn level[T : IString + Hash + Eq, B : IBinReader](self : MoonValue[T, B]) -> Int {
+///|
+fn level[T : IString + Hash + Eq, B : IBinReader](
+  self : MoonValue[T, B]
+) -> Int {
   loop self.parent, 0 {
     Some(parent), result => continue parent.parent, 1 + result
     _, result => break result
   }
 }
 
+///|
 pub fn to_string[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B]
 ) -> String {
@@ -1488,4 +1569,109 @@ pub fn to_string[T : IString + Hash + Eq, B : IBinReader](
       builder.to_string()
     }
   }
+}
+
+///|
+/// iterate all childs
+pub fn iter[T : IString + Hash + Eq, B : IBinReader](self: MoonValue[T,B])->Iter[MoonValue[T,B]]{  
+  Iter::new(
+    fn(yieldfn){
+      match self.data{
+        VT_Obj(value=map)=>{
+          for _,v in map{
+            match yieldfn(v){
+              IterEnd=>return IterEnd
+              _=>continue
+            }
+          }
+          IterEnd          
+        }
+        VT_IntKeyObj(value=map)=>{
+          for _,v in map{
+            match yieldfn(v){
+              IterEnd=>return IterEnd
+              _=>continue
+            }
+          }
+          IterEnd
+        }
+        VT_Array(value=arr)=>{
+          for _,v in arr{
+            match yieldfn(v){
+              IterEnd=>return IterEnd
+              _=>continue
+            }
+          }
+          IterEnd
+        }
+        _=> IterEnd
+      }
+    }
+  )
+}
+
+///|
+/// only iterate on map[IString,moonvalue]
+pub fn iter2[T : IString + Hash + Eq, B : IBinReader](self : MoonValue[T,B]) -> Iter2[T, MoonValue[T,B]] {
+  Iter2::new(
+    fn(yieldfn) {
+      match self.data{
+        VT_Obj(value=map)=>{
+          for k,v in map{
+            match yieldfn(k,v){
+              IterEnd=>return IterEnd
+              _=>continue
+            }
+          }          
+          IterEnd
+        }        
+        _=> IterEnd
+      }
+    }
+  )
+}
+
+///|
+/// only iterate on arrays or intmap
+pub fn iter_intmap_array[T : IString + Hash + Eq, B : IBinReader](self : MoonValue[T,B]) -> Iter2[Int64, MoonValue[T,B]] {
+  Iter2::new(
+    fn(yieldfn) {
+      match self.data{
+        VT_IntKeyObj(value=map)=>{
+          for k,v in map{
+            match yieldfn(k,v){
+              IterEnd=>return IterEnd
+              _=>continue
+            }
+          }          
+          IterEnd
+        }
+        VT_Array(value=arr)=>{
+          for idx,v in arr{            
+            match yieldfn(idx.to_int64(),v){
+              IterEnd=>return IterEnd
+              _=>continue
+            }
+          }
+          IterEnd
+        }
+        _=> IterEnd
+      }
+    }
+  )
+}
+
+test "iter"{
+  let v : MoonValue[String, Bytes] = new_object({})
+  v.set_key_string("name", "dxsoft")
+  let child = new_object({})
+  child.set_key_string("name", "child1")
+  let cc = child.add_key_object("children", StrMap)
+  cc.set_key_int("age",32)
+  v["children"] = child  
+  for key,value in v{    
+    assert_eq!(key,"name")
+    assert_eq!(value.to_string(),"dxsoft")
+    break
+  }  
 }
