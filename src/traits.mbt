@@ -694,11 +694,14 @@ impl IBinBlit for Array[Byte] with blit(
   other : Array[Byte],
   from : Int,
   len : Int
-) {
-  self.set(offset, other, from, len)
-  //other.blit_to(self,len=len,src_offset=from,dst_offset=offset)
+) {    
+  if offset < 0{
+    other.blit_to(self,len=len,src_offset=from,dst_offset=self.length())
+  } else{
+    other.blit_to(self,len=len,src_offset=from,dst_offset=offset)
+  }  
 }
 
 impl IBinBlit for Array[Byte] with append_data(self, other : Array[Byte]) -> Unit {
-  self.append_fast(other)
+  self.append(other)
 }

@@ -1090,8 +1090,8 @@ test "parse" {
       assert_eq!(result.value_by_key("array").unwrap().int_by_index(1, 0), 345)
       println(result.to_string())
       let w : Array[Byte] = Array::new()
-      let encoder = MsgpackEncoder::new(w)
-      encoder.encode(result)
+      let encoder = MsgpackEncoder::new(w)      
+      encoder.encode(result)      
       let parser : MsgPackParser[String, Array[Byte]] = MsgPackParser::newparser_with_str_array(
         true, w,
       )
