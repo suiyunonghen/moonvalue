@@ -1,4 +1,4 @@
-# suiyunonghen/moonvalue
+# messagepack moonvalue
 Bson serializer MessagePack serializer implementation for Moonbitlang
 # Design concept
 VT_String stores string types. As moonbit may generate multiple backends, the string could be either Jstring or moonbit string, so it is designed as a generic type here 
