@@ -18,7 +18,7 @@ let b : Array[Byte] = [
   89,
 ]
 let parser : MsgPackParser[String, Array[Byte]] = MsgPackParser::newparser_with_str_array(true, b)
-match parser.parser?() {
+match parser.parse?() {
   Ok(result) => println(result.to_string())
   _ => println("error")
 }
