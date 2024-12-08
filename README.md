@@ -1,5 +1,5 @@
 # suiyunonghen/moonvalue
-moonbitlang实现的msgpack,bson等集合
+Bson serializer MessagePack serializer implementation for Moonbitlang
 # Design concept
 VT_String stores string types. As moonbit may generate multiple backends, the string could be either Jstring or moonbit string, so it is designed as a generic type here 
 The type starting with VT_Share*** represents shared memory data. When parsing, it does not perform a copy operation, but directly records the binary block area and binary. VT_ShareString will only be parsed when it is actually needed. Therefore, when using shared mode, it is important to ensure that the shared memory area is valid and not overwritten by writing, otherwise it will result in inconsistent data
