@@ -93,23 +93,23 @@ fn parse_bson_doc[T : IString + Hash + Eq, B : IBinReader](
         IntKey(intKey) => p.add_intkey_object(intKey, StrMap)
         NoKey_or_Array => p.add_arr_object(StrMap)
       }
-    _ => {
-      let v = { parent, data: VT_Obj(value={}) }
-      v
-    }
+    _ => { parent, data: VT_Obj(value={}) }
   }
   while self._offset < blen {
-    let (bson_type, key) = self.parse_key_type!(blen)
+    let (bson_type, key) = self.parse_key_type!(blen, false)
     match bson_type {
       0x03 =>
-        //doc                
+        //doc
         match self.parse_bson_doc?(Some(strMap), Str(key.unwrap())) {
           Err(e) => raise e
           _ => ()
         }
       0x04 =>
         //array
-        ()
+        match self.parse_bson_array?(Some(strMap), Str(key.unwrap())) {
+          Err(e) => raise e
+          _ => ()
+        }
       0x00 =>
         //eof      
         break
@@ -124,9 +124,62 @@ fn parse_bson_doc[T : IString + Hash + Eq, B : IBinReader](
 }
 
 ///|
+fn parse_bson_array[T : IString + Hash + Eq, B : IBinReader](
+  self : BsonParser[T, B],
+  parent : MoonValue[T, B]?,
+  key : KeyInfo[T]
+) -> MoonValue[T, B]!BsonParserError {
+  let blen = self._bsonData.length()
+  let remain_size = blen - self._offset
+  if remain_size < 4 {
+    raise InvalidateBsonDoc("doc data size out of range")
+  }
+  let bson_doc_size = self._bsonData.read_int32(self._offset, true)
+  self._offset += 4
+  if bson_doc_size > remain_size {
+    raise InvalidateBsonDoc("doc data size out of range")
+  }
+  let array = match parent {
+    Some(p) =>
+      match key {
+        Str(keyStr) => p.add_key_object(keyStr, Array)
+        IntKey(intKey) => p.add_intkey_object(intKey, Array)
+        NoKey_or_Array => p.add_arr_object(Array)
+      }
+    _ => { parent, data: VT_Array(value=[]) }
+  }
+  while self._offset < blen {
+    let (bson_type, _) = self.parse_key_type!(blen, true)
+    match bson_type {
+      0x03 =>
+        //doc                
+        match self.parse_bson_doc?(Some(array), NoKey_or_Array) {
+          Err(e) => raise e
+          _ => ()
+        }
+      0x04 =>
+        match self.parse_bson_array?(Some(array), NoKey_or_Array) {
+          Err(e) => raise e
+          _ => ()
+        }
+      0x00 =>
+        //eof      
+        break
+      _ =>
+        match self.parse_value?(bson_type, blen, array, None) {
+          Err(e) => raise e
+          _ => ()
+        }
+    }
+  }
+  return array
+}
+
+///|
 fn parse_key_type[T : IString + Hash + Eq, B : IBinReader](
   self : BsonParser[T, B],
-  blen : Int
+  blen : Int,
+  is_arr_ele : Bool
 ) -> (Byte, T?)!BsonParserError {
   let bson_type = self._bsonData.read_byte(self._offset)
   self._offset += 1
@@ -141,11 +194,15 @@ fn parse_key_type[T : IString + Hash + Eq, B : IBinReader](
   } else {
     raise BsonParserError::InvalidateBsonKey("key must endwith 0")
   }
+  if is_arr_ele {
+    self._offset = key_offset + 1
+    return (bson_type, None)
+  }
   match
     (self.stringReader)?(
       self._bsonData,
       self._offset,
-      key_offset - self._offset + 1,
+      key_offset - self._offset,
     ) {
     Ok(key) => {
       self._offset = key_offset + 1
@@ -422,7 +479,10 @@ fn parse_value[T : IString + Hash + Eq, B : IBinReader](
     }
     0x0A =>
       //null
-      ()
+      match parent.data {
+        VT_Array(value=arr) => arr.push({ parent: Some(parent), data: VT_Null })
+        _ => ()
+      }
     0x0B =>
       //Regex
       ()
@@ -505,22 +565,75 @@ fn parse_value[T : IString + Hash + Eq, B : IBinReader](
   }
 }
 
-test "parse_key_type" {
+///|
+pub fn BsonParser::newparser_with_str_array(
+  shareBinary : Bool,
+  binary : Array[Byte]
+) -> BsonParser[String, Array[Byte]] {
+  {
+    _bsonData: binary,
+    shareBinary,
+    _offset: 0,
+    stringReader: read_utf8string,
+    binReader,
+  }
+}
+
+///|
+pub fn BsonParser::newparser_with_str_bytes(
+  shareBinary : Bool,
+  binary : Bytes
+) -> BsonParser[String, Bytes] {
+  {
+    _bsonData: binary,
+    shareBinary,
+    _offset: 0,
+    stringReader: read_utf8string_fromBytes,
+    binReader: bytesReader,
+  }
+}
+
+test "parse_bson" {
+  // let arr : Array[Byte] = [
+  //   139, 0, 0, 0, 16, 49, 0, 255, 255, 255, 255, 1, 100, 111, 117, 98, 108, 101,
+  //   230, 181, 174, 231, 130, 185, 230, 149, 176, 0, 46, 144, 160, 248, 49, 182, 64,
+  //   64, 16, 78, 111, 0, 1, 0, 0, 0, 2, 229, 167, 147, 229, 144, 141, 0, 10, 0, 0,
+  //   0, 228, 184, 141, 229, 190, 151, 233, 151, 178, 0, 3, 105, 110, 102, 111, 0,
+  //   66, 0, 0, 0, 16, 97, 103, 101, 0, 38, 0, 0, 0, 8, 105, 115, 109, 101, 110, 0,
+  //   1, 2, 103, 105, 116, 104, 117, 98, 0, 32, 0, 0, 0, 104, 116, 116, 112, 115, 58,
+  //   47, 47, 103, 105, 116, 104, 117, 98, 46, 99, 111, 109, 47, 115, 117, 105, 121,
+  //   117, 110, 111, 110, 103, 104, 101, 110, 0, 0, 0,
+  // ]
   let arr : Array[Byte] = [
-    139, 0, 0, 0, 16, 49, 0, 255, 255, 255, 255, 1, 100, 111, 117, 98, 108, 101,
-    230, 181, 174, 231, 130, 185, 230, 149, 176, 0, 46, 144, 160, 248, 49, 182, 64,
-    64, 16, 78, 111, 0, 1, 0, 0, 0, 2, 229, 167, 147, 229, 144, 141, 0, 10, 0, 0,
-    0, 228, 184, 141, 229, 190, 151, 233, 151, 178, 0, 3, 105, 110, 102, 111, 0,
-    66, 0, 0, 0, 16, 97, 103, 101, 0, 38, 0, 0, 0, 8, 105, 115, 109, 101, 110, 0,
-    1, 2, 103, 105, 116, 104, 117, 98, 0, 32, 0, 0, 0, 104, 116, 116, 112, 115, 58,
+    98, 1, 0, 0, 16, 49, 0, 255, 255, 255, 255, 1, 100, 111, 117, 98, 108, 101, 230,
+    181, 174, 231, 130, 185, 230, 149, 176, 0, 46, 144, 160, 248, 49, 182, 64, 64,
+    16, 78, 111, 0, 1, 0, 0, 0, 2, 229, 167, 147, 229, 144, 141, 0, 10, 0, 0, 0,
+    228, 184, 141, 229, 190, 151, 233, 151, 178, 0, 3, 105, 110, 102, 111, 0, 66,
+    0, 0, 0, 16, 97, 103, 101, 0, 38, 0, 0, 0, 8, 105, 115, 109, 101, 110, 0, 1,
+    2, 103, 105, 116, 104, 117, 98, 0, 32, 0, 0, 0, 104, 116, 116, 112, 115, 58,
     47, 47, 103, 105, 116, 104, 117, 98, 46, 99, 111, 109, 47, 115, 117, 105, 121,
-    117, 110, 111, 110, 103, 104, 101, 110, 0, 0, 0,
+    117, 110, 111, 110, 103, 104, 101, 110, 0, 0, 4, 115, 116, 117, 100, 101, 110,
+    116, 115, 0, 205, 0, 0, 0, 3, 48, 0, 99, 0, 0, 0, 2, 110, 97, 109, 101, 0, 11,
+    0, 0, 0, 228, 184, 141, 229, 190, 151, 233, 151, 178, 49, 0, 16, 97, 103, 101,
+    0, 38, 0, 0, 0, 8, 105, 115, 119, 111, 109, 101, 110, 0, 0, 2, 103, 105, 116,
+    104, 117, 98, 0, 42, 0, 0, 0, 104, 116, 116, 112, 115, 58, 47, 47, 103, 105,
+    116, 104, 117, 98, 46, 99, 111, 109, 47, 115, 117, 105, 121, 117, 110, 111, 110,
+    103, 104, 101, 110, 47, 109, 111, 111, 110, 118, 97, 108, 117, 101, 0, 0, 10,
+    49, 0, 3, 50, 0, 92, 0, 0, 0, 2, 110, 97, 109, 101, 0, 5, 0, 0, 0, 103, 105,
+    114, 108, 0, 16, 97, 103, 101, 0, 39, 0, 0, 0, 8, 105, 115, 119, 111, 109, 101,
+    110, 0, 1, 2, 103, 105, 116, 104, 117, 98, 0, 41, 0, 0, 0, 104, 116, 116, 112,
+    115, 58, 47, 47, 103, 105, 116, 104, 117, 98, 46, 99, 111, 109, 47, 115, 117,
+    105, 121, 117, 110, 111, 110, 103, 104, 101, 110, 47, 100, 97, 116, 101, 116,
+    105, 109, 101, 0, 0, 0, 0,
   ]
-  let parser : BsonParser[String, Array[Byte]] = BsonParser::new(
-    true, arr, read_utf8string, binReader,
+  let parser : BsonParser[String, Array[Byte]] = BsonParser::newparser_with_str_array(
+    false, arr,
   )
   match parser.parse?() {
-    Ok(v) => println(v.to_string())
+    Ok(v) => {
+      inspect!(v["students"].unwrap()["1"].unwrap().to_string(), content="null")
+      println(v.to_string())
+    }
     Err(e) => println(e)
   }
 }

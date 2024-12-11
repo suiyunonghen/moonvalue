@@ -9,7 +9,7 @@ _MsgPackParser::newparser_with_str_array_ will create a **MgPackParser[String,Ar
 
 _MsgPackParser::newparser_with_str_bytes_ will create a **MgPackParser[String,Bytes]**, which will parse **MoonValue [String,Bytes]**, using Moonbit string for strings and Bytes for binary   
 
-```
+```MoonBit
 let b : Array[Byte] = [
   134, 164, 110, 97, 109, 101, 169, 228, 184, 141, 229, 190, 151, 233, 151, 178,
   163, 97, 103, 101, 40, 163, 109, 101, 110, 195, 163, 110, 111, 119, 203, 64,
@@ -26,11 +26,46 @@ match parser.parse?() {
 
 # encode msgpack
 you can use MsgpackEncoder
-```
+```MoonBit
 let w: Array[Byte] = Array::new()
 let encoder = MsgpackEncoder::new(w)
 encoder.encode(result)
 println(w)
+```
+
+# decode bson
+You can use the _BsonParser::new_ function to parse the binary data of a msgpack
+```MoonBit
+  let arr : Array[Byte] = [
+    98, 1, 0, 0, 16, 49, 0, 255, 255, 255, 255, 1, 100, 111, 117, 98, 108, 101, 230,
+    181, 174, 231, 130, 185, 230, 149, 176, 0, 46, 144, 160, 248, 49, 182, 64, 64,
+    16, 78, 111, 0, 1, 0, 0, 0, 2, 229, 167, 147, 229, 144, 141, 0, 10, 0, 0, 0,
+    228, 184, 141, 229, 190, 151, 233, 151, 178, 0, 3, 105, 110, 102, 111, 0, 66,
+    0, 0, 0, 16, 97, 103, 101, 0, 38, 0, 0, 0, 8, 105, 115, 109, 101, 110, 0, 1,
+    2, 103, 105, 116, 104, 117, 98, 0, 32, 0, 0, 0, 104, 116, 116, 112, 115, 58,
+    47, 47, 103, 105, 116, 104, 117, 98, 46, 99, 111, 109, 47, 115, 117, 105, 121,
+    117, 110, 111, 110, 103, 104, 101, 110, 0, 0, 4, 115, 116, 117, 100, 101, 110,
+    116, 115, 0, 205, 0, 0, 0, 3, 48, 0, 99, 0, 0, 0, 2, 110, 97, 109, 101, 0, 11,
+    0, 0, 0, 228, 184, 141, 229, 190, 151, 233, 151, 178, 49, 0, 16, 97, 103, 101,
+    0, 38, 0, 0, 0, 8, 105, 115, 119, 111, 109, 101, 110, 0, 0, 2, 103, 105, 116,
+    104, 117, 98, 0, 42, 0, 0, 0, 104, 116, 116, 112, 115, 58, 47, 47, 103, 105,
+    116, 104, 117, 98, 46, 99, 111, 109, 47, 115, 117, 105, 121, 117, 110, 111, 110,
+    103, 104, 101, 110, 47, 109, 111, 111, 110, 118, 97, 108, 117, 101, 0, 0, 10,
+    49, 0, 3, 50, 0, 92, 0, 0, 0, 2, 110, 97, 109, 101, 0, 5, 0, 0, 0, 103, 105,
+    114, 108, 0, 16, 97, 103, 101, 0, 39, 0, 0, 0, 8, 105, 115, 119, 111, 109, 101,
+    110, 0, 1, 2, 103, 105, 116, 104, 117, 98, 0, 41, 0, 0, 0, 104, 116, 116, 112,
+    115, 58, 47, 47, 103, 105, 116, 104, 117, 98, 46, 99, 111, 109, 47, 115, 117,
+    105, 121, 117, 110, 111, 110, 103, 104, 101, 110, 47, 100, 97, 116, 101, 116,
+    105, 109, 101, 0, 0, 0, 0,
+  ]
+  let parser : BsonParser[String, Array[Byte]] = BsonParser::newparser_with_str_array(false, arr)
+  match parser.parse?() {
+    Ok(v) => {
+      inspect!(v["students"].unwrap()["1"].unwrap().to_string(), content="null")
+      println(v.to_string())
+    }
+    Err(e) => println(e)
+  }
 ```
 
 
@@ -40,7 +75,7 @@ The type starting with VT_Share*** represents shared memory data. When parsing, 
 # write moonvalue
 You can create objects or array types using functions such as _@moonvalue.new_object_ , _new_array_, etc. Set map key value pairs using _set_key_*** _  related functions, and IntMap key value pairs  using set_intkey_***  
 Set_index_*** Set array value 
-```
+```MoonBit
 let v : @moonvalue.MoonValue[String, Bytes] = @moonvalue.new_object({})
 v.set_key_string("name", "dxsoft")
 let child = @moonvalue.new_object({})
@@ -75,7 +110,7 @@ eg.
 > as_bool  
 > as_double   
 
-```
+```MoonBit
 assert_eq!(result.string_by_key("name",""),"不得闲")
 assert_eq!(result.bool_by_key("men",false),true)
 assert_eq!(result.value_by_key("array").unwrap().int_by_index(1,0),345)

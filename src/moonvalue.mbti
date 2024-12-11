@@ -3,8 +3,6 @@ package suiyunonghen/moonvalue
 alias @suiyunonghen/datetime as @datetime
 
 // Values
-fn newBinaryView[B : IBinReader](B, Int, Int) -> BinaryView[B]
-
 fn utf16_utf8(String) -> Array[Byte]!ConvertError
 
 fn utf8_utf16(ArrayView[Byte]) -> String!ConvertError
@@ -21,8 +19,28 @@ impl BigEndian {
 }
 
 type BinaryView
+impl BinaryView {
+  newBinaryView[B : IBinReader](B, Int, Int) -> Self[B]
+}
 impl[B : Show] Show for BinaryView[B]
 impl IBinReader for BinaryView[IBinReader]
+
+type BsonParser
+impl BsonParser {
+  newparser_with_str_array(Bool, Array[Byte]) -> Self[String, Array[Byte]]
+  newparser_with_str_bytes(Bool, Bytes) -> Self[String, Bytes]
+  parse[T : IString + Hash + Eq, B : IBinReader](Self[T, B]) -> MoonValue[T, B]!BsonParserError
+}
+
+pub(all) type! BsonParserError {
+  BsonEof
+  InvalidateBsonDoc(String)
+  InvalidateBsonDataType(String)
+  InvalidateBsonKey(String)
+  InvalidateStringValue(String)
+  InvalidateBsonBin(String)
+}
+impl Show for BsonParserError
 
 pub(all) enum CompValueType {
   StrMap
@@ -80,7 +98,7 @@ impl MoonValue {
   set_float[T : IString + Hash + Eq, B : IBinReader](Self[T, B], Float) -> Unit
   set_index_bin[T : IString + Hash + Eq, B : IBinReader](Self[T, B], Int, B) -> Unit
   set_index_bool[T : IString + Hash + Eq, B : IBinReader](Self[T, B], Int, Bool) -> Unit
-  set_index_date[T : IString + Hash + Eq, B : IBinReader](Self[T, B], Int, @datetime.DateTime) -> Unit
+  set_index_datetime[T : IString + Hash + Eq, B : IBinReader](Self[T, B], Int, @datetime.DateTime) -> Unit
   set_index_double[T : IString + Hash + Eq, B : IBinReader](Self[T, B], Int, Double) -> Unit
   set_index_ext[T : IString + Hash + Eq, B : IBinReader](Self[T, B], Int, B, Int) -> Unit
   set_index_float[T : IString + Hash + Eq, B : IBinReader](Self[T, B], Int, Float) -> Unit
