@@ -1,5 +1,5 @@
 ///| moonvalue
-/// 
+///
 
 ///| data of moonvalue
 pub(all) enum ValueData[T, B] {
@@ -21,6 +21,7 @@ pub(all) enum ValueData[T, B] {
   VT_IntKeyObj(value~ : Map[Int64, MoonValue[T, B]])
 }
 
+///|
 struct MoonValue[T, B] {
   mut parent : MoonValue[T, B]?
   mut data : ValueData[T, B]
@@ -921,6 +922,7 @@ pub fn set_key_int64[T : IString + Hash + Eq, B : IBinReader](
   }
 }
 
+///|
 pub(all) enum CompValueType {
   StrMap
   IntMap
@@ -1308,7 +1310,7 @@ pub fn set_index_share_bin[T : IString + Hash + Eq, B : IBinReader](
 }
 
 ///|
-pub fn set_index_date[T : IString + Hash + Eq, B : IBinReader](
+pub fn set_index_datetime[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B],
   index : Int,
   v : @datetime.DateTime
@@ -1497,10 +1499,7 @@ pub fn to_string[T : IString + Hash + Eq, B : IBinReader](
     VT_True => "true"
     VT_False => "false"
     VT_Int(value=v) => v.to_string()
-    VT_Double(value=v) => {
-      println("double")
-      v.to_string()
-    }
+    VT_Double(value=v) => v.to_string()
     VT_Float(value=v) => v.to_string()
     VT_String(value=v) => v.to_string()
     VT_Bin(value=v) => Show::to_string(v)
@@ -1545,7 +1544,7 @@ pub fn to_string[T : IString + Hash + Eq, B : IBinReader](
     }
     VT_ShareBin(value=_) => ""
     VT_ShareExt(value=_, extType=_) => ""
-    VT_ShareString(value=view) => view.string()
+    VT_ShareString(value=view) => "\"\{view.string()}\""
     VT_IntKeyObj(value=intMap) => {
       let builder : StringBuilder = StringBuilder::new()
       let mulSpace = self.level()
@@ -1573,105 +1572,111 @@ pub fn to_string[T : IString + Hash + Eq, B : IBinReader](
 
 ///|
 /// iterate all childs
-pub fn iter[T : IString + Hash + Eq, B : IBinReader](self: MoonValue[T,B])->Iter[MoonValue[T,B]]{  
+pub fn iter[T : IString + Hash + Eq, B : IBinReader](
+  self : MoonValue[T, B]
+) -> Iter[MoonValue[T, B]] {
   Iter::new(
-    fn(yieldfn){
-      match self.data{
-        VT_Obj(value=map)=>{
-          for _,v in map{
-            match yieldfn(v){
-              IterEnd=>return IterEnd
-              _=>continue
-            }
-          }
-          IterEnd          
-        }
-        VT_IntKeyObj(value=map)=>{
-          for _,v in map{
-            match yieldfn(v){
-              IterEnd=>return IterEnd
-              _=>continue
+    fn(yieldfn) {
+      match self.data {
+        VT_Obj(value=map) => {
+          for _, v in map {
+            match yieldfn(v) {
+              IterEnd => return IterEnd
+              _ => continue
             }
           }
           IterEnd
         }
-        VT_Array(value=arr)=>{
-          for _,v in arr{
-            match yieldfn(v){
-              IterEnd=>return IterEnd
-              _=>continue
+        VT_IntKeyObj(value=map) => {
+          for _, v in map {
+            match yieldfn(v) {
+              IterEnd => return IterEnd
+              _ => continue
             }
           }
           IterEnd
         }
-        _=> IterEnd
+        VT_Array(value=arr) => {
+          for _, v in arr {
+            match yieldfn(v) {
+              IterEnd => return IterEnd
+              _ => continue
+            }
+          }
+          IterEnd
+        }
+        _ => IterEnd
       }
-    }
+    },
   )
 }
 
 ///|
 /// only iterate on map[IString,moonvalue]
-pub fn iter2[T : IString + Hash + Eq, B : IBinReader](self : MoonValue[T,B]) -> Iter2[T, MoonValue[T,B]] {
+pub fn iter2[T : IString + Hash + Eq, B : IBinReader](
+  self : MoonValue[T, B]
+) -> Iter2[T, MoonValue[T, B]] {
   Iter2::new(
     fn(yieldfn) {
-      match self.data{
-        VT_Obj(value=map)=>{
-          for k,v in map{
-            match yieldfn(k,v){
-              IterEnd=>return IterEnd
-              _=>continue
+      match self.data {
+        VT_Obj(value=map) => {
+          for k, v in map {
+            match yieldfn(k, v) {
+              IterEnd => return IterEnd
+              _ => continue
             }
-          }          
+          }
           IterEnd
-        }        
-        _=> IterEnd
+        }
+        _ => IterEnd
       }
-    }
+    },
   )
 }
 
 ///|
 /// only iterate on arrays or intmap
-pub fn iter_intmap_array[T : IString + Hash + Eq, B : IBinReader](self : MoonValue[T,B]) -> Iter2[Int64, MoonValue[T,B]] {
+pub fn iter_intmap_array[T : IString + Hash + Eq, B : IBinReader](
+  self : MoonValue[T, B]
+) -> Iter2[Int64, MoonValue[T, B]] {
   Iter2::new(
     fn(yieldfn) {
-      match self.data{
-        VT_IntKeyObj(value=map)=>{
-          for k,v in map{
-            match yieldfn(k,v){
-              IterEnd=>return IterEnd
-              _=>continue
-            }
-          }          
-          IterEnd
-        }
-        VT_Array(value=arr)=>{
-          for idx,v in arr{            
-            match yieldfn(idx.to_int64(),v){
-              IterEnd=>return IterEnd
-              _=>continue
+      match self.data {
+        VT_IntKeyObj(value=map) => {
+          for k, v in map {
+            match yieldfn(k, v) {
+              IterEnd => return IterEnd
+              _ => continue
             }
           }
           IterEnd
         }
-        _=> IterEnd
+        VT_Array(value=arr) => {
+          for idx, v in arr {
+            match yieldfn(idx.to_int64(), v) {
+              IterEnd => return IterEnd
+              _ => continue
+            }
+          }
+          IterEnd
+        }
+        _ => IterEnd
       }
-    }
+    },
   )
 }
 
-test "iter"{
+test "iter" {
   let v : MoonValue[String, Bytes] = new_object({})
   v.set_key_string("name", "dxsoft")
   let child = new_object({})
   child.set_key_string("name", "child1")
   let cc = child.add_key_object("children", StrMap)
-  cc.set_key_int("age",32)
-  v["children"] = child  
-  for key,value in v{    
-    assert_eq!(key,"name")
-    assert_eq!(value.to_string(),"dxsoft")
+  cc.set_key_int("age", 32)
+  v["children"] = child
+  for key, value in v {
+    assert_eq!(key, "name")
+    assert_eq!(value.to_string(), "dxsoft")
     break
-  }  
+  }
 }

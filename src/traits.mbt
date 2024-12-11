@@ -6,6 +6,7 @@ pub(open) trait IString {
   to_utf8(Self) -> Array[Byte]!ConvertError
 }
 
+///|
 impl IString with to_utf8(self) -> Array[Byte]!ConvertError {
   let result = Array::new()
   let len = self.length()
@@ -319,14 +320,17 @@ pub impl Show for IBinReader with output(self, l : Logger) -> Unit {
   l.write_char(']')
 }
 
+///|
 impl IBinReader with read_float(self, offset : Int) -> Float {
   self.read_int32(offset, false).reinterpret_as_float()
 }
 
+///|
 impl IBinReader with read_double(self, offset : Int) -> Double {
   self.read_int64(offset, false).reinterpret_as_double()
 }
 
+///|
 impl IBinReader with read_int16(self, offset : Int, littleEndian : Bool) -> Int {
   let bytes : Array[Byte] = [self.read_byte(offset), self.read_byte(offset + 1)]
   if littleEndian {
@@ -336,6 +340,7 @@ impl IBinReader with read_int16(self, offset : Int, littleEndian : Bool) -> Int 
   }
 }
 
+///|
 impl IBinReader with read_int32(self, offset : Int, littleEndian : Bool) -> Int {
   let bytes : Array[Byte] = [
     self.read_byte(offset),
@@ -350,6 +355,7 @@ impl IBinReader with read_int32(self, offset : Int, littleEndian : Bool) -> Int 
   }
 }
 
+///|
 impl IBinReader with read_int64(self, offset : Int, littleEndian : Bool) -> Int64 {
   let bytes : Array[Byte] = [
     self.read_byte(offset),
@@ -368,6 +374,7 @@ impl IBinReader with read_int64(self, offset : Int, littleEndian : Bool) -> Int6
   }
 }
 
+///|
 impl IBinReader with read_bool(self, offset : Int) -> Bool {
   self.read_byte(offset) == 1
 }
@@ -401,6 +408,7 @@ pub(open) trait IBinWriter {
   write_utf8(Self, IString) -> Unit!ConvertError
 }
 
+///|
 impl IBinWriter with write_utf8(self, str : IString) -> Unit!ConvertError {
   let len = str.length()
   for i in 0..<len {
@@ -422,10 +430,12 @@ impl IBinWriter with write_utf8(self, str : IString) -> Unit!ConvertError {
   }
 }
 
+///|
 impl IBinWriter with append_byte(self, b : Byte) -> Unit {
   self.write_byte(-1, b)
 }
 
+///|
 impl IBinWriter with append_bool(self, b : Bool) -> Unit {
   if b {
     self.write_byte(-1, 1)
@@ -434,6 +444,7 @@ impl IBinWriter with append_bool(self, b : Bool) -> Unit {
   }
 }
 
+///|
 impl IBinWriter with write_bool(self, offset : Int, value : Bool) -> Unit {
   if value {
     self.write_byte(offset, 1)
@@ -442,6 +453,7 @@ impl IBinWriter with write_bool(self, offset : Int, value : Bool) -> Unit {
   }
 }
 
+///|
 impl IBinWriter with write_bytes(self, offset : Int, b : Bytes) -> Unit {
   if offset < 0 {
     for v in b {
@@ -456,6 +468,7 @@ impl IBinWriter with write_bytes(self, offset : Int, b : Bytes) -> Unit {
   }
 }
 
+///|
 impl IBinWriter with write_int16(
   self,
   offset : Int,
@@ -470,26 +483,32 @@ impl IBinWriter with write_int16(
   self.write_bytes(offset, bytes)
 }
 
+///|
 impl IBinWriter with append_int16(self, value : Int, littleEndian : Bool) -> Unit {
   self.write_int16(-1, value, littleEndian)
 }
 
+///|
 impl IBinWriter with append_int32(self, value : Int, littleEndian : Bool) -> Unit {
   self.write_int32(-1, value, littleEndian)
 }
 
+///|
 impl IBinWriter with append_int64(self, value : Int64, littleEndian : Bool) -> Unit {
   self.write_int64(-1, value, littleEndian)
 }
 
+///|
 impl IBinWriter with append_double(self, value : Double) -> Unit {
   self.write_double(-1, value)
 }
 
+///|
 impl IBinWriter with append_float(self, value : Float) -> Unit {
   self.write_float(-1, value)
 }
 
+///|
 impl IBinWriter with write_int32(
   self,
   offset : Int,
@@ -504,6 +523,7 @@ impl IBinWriter with write_int32(
   self.write_bytes(offset, bytes)
 }
 
+///|
 impl IBinWriter with write_int64(
   self,
   offset : Int,
@@ -518,20 +538,25 @@ impl IBinWriter with write_int64(
   self.write_bytes(offset, bytes)
 }
 
+///|
 impl IBinWriter with write_double(self, offset : Int, v : Double) -> Unit {
   self.write_int64(offset, v.reinterpret_as_int64(), false)
 }
 
+///|
 impl IBinWriter with write_float(self, offset : Int, v : Float) -> Unit {
   self.write_int32(offset, v.reinterpret_as_int(), false)
 }
 
+///|
 pub impl IBinReader for Bytes with length(self) -> Int { self.length() }
 
+///|
 pub impl IBinReader for Bytes with read_byte(self, offset : Int) -> Byte {
   self[offset]
 }
 
+///|
 pub impl IBinWriter for Bytes with write_byte(self, offset : Int, value : Byte) -> Unit {
   self[offset] = value
 }
@@ -543,7 +568,8 @@ struct BinaryView[B] {
   len : Int
 } derive(Show)
 
-pub fn newBinaryView[B : IBinReader](
+///|
+pub fn BinaryView::newBinaryView[B : IBinReader](
   src : B,
   from : Int,
   len : Int
@@ -551,10 +577,12 @@ pub fn newBinaryView[B : IBinReader](
   { _source: src, from, len }
 }
 
+///|
 pub impl IBinReader for BinaryView[IBinReader] with length(self) -> Int {
   self.len
 }
 
+///|
 pub impl IBinReader for BinaryView[IBinReader] with read_bool(
   self,
   offset : Int
@@ -562,6 +590,7 @@ pub impl IBinReader for BinaryView[IBinReader] with read_bool(
   self._source.read_bool(self.from + offset)
 }
 
+///|
 pub impl IBinReader for BinaryView[IBinReader] with read_byte(
   self,
   offset : Int
@@ -588,6 +617,7 @@ pub fn StringView::newStringView[T : IString + Hash + Eq, B : IBinReader](
   { _source: source, from, len, _str: None, stringReader }
 }
 
+///|
 pub fn value[T : IString + Hash + Eq, B : IBinReader](
   self : StringView[T, B]
 ) -> T!ConvertError {
@@ -597,6 +627,7 @@ pub fn value[T : IString + Hash + Eq, B : IBinReader](
   }
 }
 
+///|
 pub fn string[T : IString + Hash + Eq, B : IBinReader](
   self : StringView[T, B]
 ) -> String {
@@ -610,6 +641,7 @@ pub fn string[T : IString + Hash + Eq, B : IBinReader](
   }
 }
 
+///|
 pub impl IString for StringView[String, Bytes] with charCodeAt(
   self,
   index : Int
@@ -627,6 +659,7 @@ pub impl IString for StringView[String, Bytes] with charCodeAt(
   }
 }
 
+///|
 pub impl IString for StringView[String, Bytes] with length(self) -> Int {
   match self._str {
     Some(v) => v.length()
@@ -641,6 +674,7 @@ pub impl IString for StringView[String, Bytes] with length(self) -> Int {
   }
 }
 
+///|
 pub impl IString for StringView[String, Bytes] with to_string(self) -> String {
   match self._str {
     Some(v) => v.to_string()
@@ -655,12 +689,15 @@ pub impl IString for StringView[String, Bytes] with to_string(self) -> String {
   }
 }
 
+///|
 pub impl IBinReader for Array[Byte] with length(self) -> Int { self.length() }
 
+///|
 pub impl IBinReader for Array[Byte] with read_byte(self, offset : Int) -> Byte {
   self[offset]
 }
 
+///|
 pub impl IBinWriter for Array[Byte] with write_byte(
   self,
   offset : Int,
@@ -682,26 +719,31 @@ pub(open) trait IBinBlit: IBinWriter + IBinReader {
   append_data(Self, Self) -> Unit
 }
 
+///|
 impl IBinBlit for Array[Byte] with newBlit() -> Array[Byte] { Array::new() }
 
+///|
 impl IBinBlit for Array[Byte] with as_binwriter(self) -> IBinWriter { self }
 
+///|
 impl IBinBlit for Array[Byte] with as_binreader(self) -> IBinReader { self }
 
+///|
 impl IBinBlit for Array[Byte] with blit(
   self,
   offset : Int,
   other : Array[Byte],
   from : Int,
   len : Int
-) {    
-  if offset < 0{
-    other.blit_to(self,len=len,src_offset=from,dst_offset=self.length())
-  } else{
-    other.blit_to(self,len=len,src_offset=from,dst_offset=offset)
-  }  
+) {
+  if offset < 0 {
+    other.blit_to(self, len~, src_offset=from, dst_offset=self.length())
+  } else {
+    other.blit_to(self, len~, src_offset=from, dst_offset=offset)
+  }
 }
 
+///|
 impl IBinBlit for Array[Byte] with append_data(self, other : Array[Byte]) -> Unit {
   self.append(other)
 }

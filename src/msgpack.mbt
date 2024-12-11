@@ -1,3 +1,4 @@
+///|
 priv enum MsgPackFormatCode {
   FmtCodeNil //0xc0
   FmtCodeUnUsed //0xc1
@@ -47,6 +48,7 @@ struct MsgPackParser[T, B] {
   mut _offset : Int
 }
 
+///|
 fn MsgPackParser::new[T : IString + Hash + Eq, B : IBinReader](
   shareBinary : Bool,
   binary : B,
@@ -62,6 +64,7 @@ fn MsgPackParser::new[T : IString + Hash + Eq, B : IBinReader](
   }
 }
 
+///|
 fn detectionFmtCode[T : IString + Hash + Eq, B : IBinReader](
   self : MsgPackParser[T, B]
 ) -> MsgPackFormatCode {
@@ -125,6 +128,7 @@ fn detectionFmtCode[T : IString + Hash + Eq, B : IBinReader](
   }
 }
 
+///|
 fn parse_u8[T : IString + Hash + Eq, B : IBinReader](
   self : MsgPackParser[T, B]
 ) -> Int {
@@ -133,6 +137,7 @@ fn parse_u8[T : IString + Hash + Eq, B : IBinReader](
   result
 }
 
+///|
 fn parse_i8[T : IString + Hash + Eq, B : IBinReader](
   self : MsgPackParser[T, B]
 ) -> Int {
@@ -144,6 +149,7 @@ fn parse_i8[T : IString + Hash + Eq, B : IBinReader](
   result
 }
 
+///|
 fn parse_u16[T : IString + Hash + Eq, B : IBinReader](
   self : MsgPackParser[T, B]
 ) -> Int {
@@ -152,6 +158,7 @@ fn parse_u16[T : IString + Hash + Eq, B : IBinReader](
   result
 }
 
+///|
 fn parse_i16[T : IString + Hash + Eq, B : IBinReader](
   self : MsgPackParser[T, B]
 ) -> Int {
@@ -163,6 +170,7 @@ fn parse_i16[T : IString + Hash + Eq, B : IBinReader](
   result
 }
 
+///|
 fn parse_u32[T : IString + Hash + Eq, B : IBinReader](
   self : MsgPackParser[T, B]
 ) -> UInt {
@@ -173,6 +181,7 @@ fn parse_u32[T : IString + Hash + Eq, B : IBinReader](
   result
 }
 
+///|
 fn parse_u64[T : IString + Hash + Eq, B : IBinReader](
   self : MsgPackParser[T, B]
 ) -> UInt64 {
@@ -183,6 +192,7 @@ fn parse_u64[T : IString + Hash + Eq, B : IBinReader](
   result
 }
 
+///|
 fn parse_float[T : IString + Hash + Eq, B : IBinReader](
   self : MsgPackParser[T, B]
 ) -> Float {
@@ -191,6 +201,7 @@ fn parse_float[T : IString + Hash + Eq, B : IBinReader](
   result
 }
 
+///|
 fn parse_double[T : IString + Hash + Eq, B : IBinReader](
   self : MsgPackParser[T, B]
 ) -> Double {
@@ -206,6 +217,7 @@ pub fn parse[T : IString + Hash + Eq, B : IBinReader](
   self.parse_value!(self.detectionFmtCode(), None, KeyInfo::NoKey_or_Array)
 }
 
+///|
 enum KeyInfo[T] {
   NoKey_or_Array
   Str(T)
@@ -221,6 +233,7 @@ pub(all) type! MsgPackParserError {
   ErrorIntKey(String)
 }
 
+///|
 fn parse_key[T : IString + Hash + Eq, B : IBinReader](
   self : MsgPackParser[T, B]
 ) -> T!MsgPackParserError {
@@ -228,7 +241,8 @@ fn parse_key[T : IString + Hash + Eq, B : IBinReader](
   match code {
     FmtCodeFixStr(len=strLen)
     | FmtCodeStr8(len=strLen)
-    | FmtCodeStr16(len=strLen) | FmtCodeStr32(len=strLen) => {
+    | FmtCodeStr16(len=strLen)
+    | FmtCodeStr32(len=strLen) => {
       let strLen = strLen.reinterpret_as_int()
       match (self.stringReader)?(self._packData, self._offset, strLen) {
         Err(ConvertError(str)) => raise ErrorUtf8String(str)
@@ -242,23 +256,27 @@ fn parse_key[T : IString + Hash + Eq, B : IBinReader](
   }
 }
 
+///|
 fn parse_intKey[T : IString + Hash + Eq, B : IBinReader](
   self : MsgPackParser[T, B]
 ) -> Int64!MsgPackParserError {
   let code = self.detectionFmtCode()
   match code {
     FmtCodeUInt8(value=vInt)
-    | FmtCodeUInt32(value=vInt) | FmtCodeUInt16(value=vInt) => vInt.to_int64()
+    | FmtCodeUInt32(value=vInt)
+    | FmtCodeUInt16(value=vInt) => vInt.to_int64()
     FmtCodeInt8(value=vInt)
     | FmtCodeFixInt(value=vInt)
     | FmtCodeNegFixInt(value=vInt)
-    | FmtCodeInt32(value=vInt) | FmtCodeInt16(value=vInt) => vInt.to_int64()
+    | FmtCodeInt32(value=vInt)
+    | FmtCodeInt16(value=vInt) => vInt.to_int64()
     FmtCodeUInt64(value=vInt) => vInt.reinterpret_as_int64()
     FmtCodeInt64(value=vInt) => vInt
     _ => raise ErrorIntKey("invalidate int map key code")
   }
 }
 
+///|
 fn parse_value[T : IString + Hash + Eq, B : IBinReader](
   self : MsgPackParser[T, B],
   fmtCode : MsgPackFormatCode,
@@ -267,7 +285,8 @@ fn parse_value[T : IString + Hash + Eq, B : IBinReader](
 ) -> MoonValue[T, B]!MsgPackParserError {
   match fmtCode {
     FmtCodeFixMap(len=mapLen)
-    | FmtCodeMap16(len=mapLen) | FmtCodeMap32(len=mapLen) => {
+    | FmtCodeMap16(len=mapLen)
+    | FmtCodeMap32(len=mapLen) => {
       //先探测一下key是int还是string，然后知道用intmap      
       let code = self._packData.read_byte(self._offset)
       let result = if (code >= 0xd9 && code <= 0xdb) ||
@@ -328,7 +347,8 @@ fn parse_value[T : IString + Hash + Eq, B : IBinReader](
       return result
     }
     FmtCodeFixArray(len=arrLen)
-    | FmtCodeArray16(len=arrLen) | FmtCodeArray32(len=arrLen) => {
+    | FmtCodeArray16(len=arrLen)
+    | FmtCodeArray32(len=arrLen) => {
       let result = match parent {
         Some(p) =>
           match key {
@@ -355,7 +375,8 @@ fn parse_value[T : IString + Hash + Eq, B : IBinReader](
     }
     FmtCodeFixStr(len=strLen)
     | FmtCodeStr8(len=strLen)
-    | FmtCodeStr16(len=strLen) | FmtCodeStr32(len=strLen) => {
+    | FmtCodeStr16(len=strLen)
+    | FmtCodeStr32(len=strLen) => {
       let strLen = strLen.reinterpret_as_int()
       if self.shareBinary {
         let view : StringView[T, B] = newStringView(
@@ -448,10 +469,11 @@ fn parse_value[T : IString + Hash + Eq, B : IBinReader](
     }
     FmtCodeNil | FmtCodeUnUsed => { parent, data: VT_Null }
     FmtCodeBin8(len=binLen)
-    | FmtCodeBin16(len=binLen) | FmtCodeBin32(len=binLen) => {
+    | FmtCodeBin16(len=binLen)
+    | FmtCodeBin32(len=binLen) => {
       let binLen = binLen.reinterpret_as_int()
       if self.shareBinary {
-        let view : BinaryView[B] = newBinaryView(
+        let view : BinaryView[B] = BinaryView::newBinaryView(
           self._packData,
           self._offset,
           binLen,
@@ -495,7 +517,7 @@ fn parse_value[T : IString + Hash + Eq, B : IBinReader](
             match key {
               Str(keyStr) => p.set_key_datetime(keyStr, date)
               IntKey(intKey) => p.set_intkey_datetime(intKey, date)
-              _ => p.set_index_date(-1, date)
+              _ => p.set_index_datetime(-1, date)
             }
           _ => ()
         }
@@ -511,7 +533,8 @@ fn parse_value[T : IString + Hash + Eq, B : IBinReader](
       self.parse_ext(parent, key, exType, extLen.reinterpret_as_int())
     }
     FmtCodeUInt8(value=vInt)
-    | FmtCodeUInt32(value=vInt) | FmtCodeUInt16(value=vInt) => {
+    | FmtCodeUInt32(value=vInt)
+    | FmtCodeUInt16(value=vInt) => {
       let vInt = vInt.to_int64()
       match parent {
         Some(p) =>
@@ -527,7 +550,8 @@ fn parse_value[T : IString + Hash + Eq, B : IBinReader](
     FmtCodeInt8(value=vInt)
     | FmtCodeFixInt(value=vInt)
     | FmtCodeNegFixInt(value=vInt)
-    | FmtCodeInt32(value=vInt) | FmtCodeInt16(value=vInt) => {
+    | FmtCodeInt32(value=vInt)
+    | FmtCodeInt16(value=vInt) => {
       let vInt = vInt.to_int64()
       match parent {
         Some(p) =>
@@ -577,7 +601,7 @@ fn parse_value[T : IString + Hash + Eq, B : IBinReader](
             match key {
               Str(keyStr) => p.set_key_datetime(keyStr, date)
               IntKey(intKey) => p.set_intkey_datetime(intKey, date)
-              _ => p.set_index_date(-1, date)
+              _ => p.set_index_datetime(-1, date)
             }
           _ => ()
         }
@@ -598,7 +622,7 @@ fn parse_value[T : IString + Hash + Eq, B : IBinReader](
             match key {
               Str(keyStr) => p.set_key_datetime(keyStr, date)
               IntKey(intKey) => p.set_intkey_datetime(intKey, date)
-              _ => p.set_index_date(-1, date)
+              _ => p.set_index_datetime(-1, date)
             }
           _ => ()
         }
@@ -610,6 +634,7 @@ fn parse_value[T : IString + Hash + Eq, B : IBinReader](
   }
 }
 
+///|
 fn parse_ext[T : IString + Hash + Eq, B : IBinReader](
   self : MsgPackParser[T, B],
   parent : MoonValue[T, B]?,
@@ -644,6 +669,7 @@ fn parse_ext[T : IString + Hash + Eq, B : IBinReader](
   }
 }
 
+///|
 fn read_utf8string(
   bin : Array[Byte],
   offset : Int,
@@ -679,12 +705,14 @@ fn read_utf8string(
   String::from_array(strArr)
 }
 
+///|
 fn binReader(bin : Array[Byte], offset : Int, binLen : Int) -> Array[Byte] {
   let result = Array::new()
   bin.blit_to(result, len=binLen, src_offset=offset)
   result
 }
 
+///|
 pub fn MsgPackParser::newparser_with_str_array(
   shareBinary : Bool,
   binary : Array[Byte]
@@ -698,12 +726,14 @@ pub fn MsgPackParser::newparser_with_str_array(
   }
 }
 
+///|
 fn bytesReader(bin : Bytes, offset : Int, binLen : Int) -> Bytes {
   let result = Bytes::new(binLen)
   result.blit(0, bin, offset, binLen)
   result
 }
 
+///|
 fn read_utf8string_fromBytes(
   bin : Bytes,
   offset : Int,
@@ -739,6 +769,7 @@ fn read_utf8string_fromBytes(
   String::from_array(strArr)
 }
 
+///|
 pub fn MsgPackParser::newparser_with_str_bytes(
   shareBinary : Bool,
   binary : Bytes
@@ -752,14 +783,17 @@ pub fn MsgPackParser::newparser_with_str_bytes(
   }
 }
 
+///|
 struct MsgpackEncoder[B] {
   writer : B
 }
 
+///|
 pub fn MsgpackEncoder::new[B : IBinBlit](writer : B) -> MsgpackEncoder[B] {
   { writer, }
 }
 
+///|
 fn encode_int[B : IBinBlit](self : MsgpackEncoder[B], v : Int64) -> Unit {
   if v >= 0 {
     if v < 128 {
@@ -819,6 +853,7 @@ fn encode_int[B : IBinBlit](self : MsgpackEncoder[B], v : Int64) -> Unit {
   }
 }
 
+///|
 fn encode_string[T : IString + Hash + Eq, B : IBinBlit](
   self : MsgpackEncoder[B],
   str : T
@@ -849,6 +884,7 @@ fn encode_string[T : IString + Hash + Eq, B : IBinBlit](
   // }  
 }
 
+///|
 fn encode_share_string[T : IString + Hash + Eq, B : IBinBlit](
   self : MsgpackEncoder[B],
   str : StringView[T, B]
@@ -876,6 +912,7 @@ fn encode_share_string[T : IString + Hash + Eq, B : IBinBlit](
   // }  
 }
 
+///|
 fn encode_datetime[B : IBinBlit](
   self : MsgpackEncoder[B],
   d : @datetime.DateTime
@@ -907,6 +944,7 @@ fn encode_datetime[B : IBinBlit](
   self.writer.append_int64(secs, false)
 }
 
+///|
 fn encode_bin[B : IBinBlit](
   self : MsgpackEncoder[B],
   v : B,
@@ -932,6 +970,7 @@ fn encode_bin[B : IBinBlit](
   }
 }
 
+///|
 fn encode_ext[B : IBinBlit](
   self : MsgpackEncoder[B],
   v : B,
@@ -984,6 +1023,7 @@ fn encode_ext[B : IBinBlit](
   }
 }
 
+///|
 pub fn encode[T : IString + Hash + Eq, B : IBinBlit](
   self : MsgpackEncoder[B],
   value : MoonValue[T, B]
@@ -1090,8 +1130,8 @@ test "parse" {
       assert_eq!(result.value_by_key("array").unwrap().int_by_index(1, 0), 345)
       println(result.to_string())
       let w : Array[Byte] = Array::new()
-      let encoder = MsgpackEncoder::new(w)      
-      encoder.encode(result)      
+      let encoder = MsgpackEncoder::new(w)
+      encoder.encode(result)
       let parser : MsgPackParser[String, Array[Byte]] = MsgPackParser::newparser_with_str_array(
         true, w,
       )

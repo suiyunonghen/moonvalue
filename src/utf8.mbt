@@ -3,17 +3,21 @@
 /// 0000 - 007F  0xxxxxxx
 /// 0080 - 07FF 110xxxxx 10xxxxxx
 /// 0800 - FFFF 1110xxxx 10xxxxxx 10xxxxxx
-
 const UTF8_END1 = 0x007F
 
+///|
 const UTF8_START2 = 0x0080
 
+///|
 const UTF8_END2 = 0x07FF
 
+///|
 const UTF8_START3 = 0x0800
 
+///|
 const UTF8_END3 = 0xFFFF
 
+///|
 pub(all) type! ConvertError String
 
 ///|

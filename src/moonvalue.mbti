@@ -1,0 +1,256 @@
+package suiyunonghen/moonvalue
+
+alias @suiyunonghen/datetime as @datetime
+
+// Values
+fn newBinaryView[B : IBinReader](B, Int, Int) -> BinaryView[B]
+
+fn utf16_utf8(String) -> Array[Byte]!ConvertError
+
+fn utf8_utf16(ArrayView[Byte]) -> String!ConvertError
+
+// Types and methods
+type BigEndian
+impl BigEndian {
+  uint16(ArrayView[Byte]) -> UInt
+  uint16Bytes(UInt) -> Bytes
+  uint32(ArrayView[Byte]) -> UInt
+  uint32Bytes(UInt) -> Bytes
+  uint64(ArrayView[Byte]) -> UInt64
+  uint64Bytes(UInt64) -> Bytes
+}
+
+type BinaryView
+impl[B : Show] Show for BinaryView[B]
+impl IBinReader for BinaryView[IBinReader]
+
+pub(all) enum CompValueType {
+  StrMap
+  IntMap
+  Array
+}
+
+pub(all) type! ConvertError String
+
+type KeyInfo
+
+type LittleEndian
+impl LittleEndian {
+  uint16(ArrayView[Byte]) -> UInt
+  uint16Bytes(UInt) -> Bytes
+  uint32(ArrayView[Byte]) -> UInt
+  uint32Bytes(UInt) -> Bytes
+  uint64(ArrayView[Byte]) -> UInt64
+  uint64Bytes(UInt64) -> Bytes
+}
+
+type MoonValue
+impl MoonValue {
+  add_arr_object[T : IString + Hash + Eq, B : IBinReader](Self[T, B], CompValueType) -> Self[T, B]
+  add_intkey_object[T : IString + Hash + Eq, B : IBinReader](Self[T, B], Int64, CompValueType) -> Self[T, B]
+  add_key_object[T : IString + Hash + Eq, B : IBinReader](Self[T, B], T, CompValueType) -> Self[T, B]
+  as_bool[T : IString + Hash + Eq, B : IBinReader](Self[T, B], default~ : Bool) -> Bool
+  as_datetime[T : IString + Hash + Eq, B : IBinReader](Self[T, B], default~ : @datetime.DateTime = ..) -> @datetime.DateTime
+  as_double[T : IString + Hash + Eq, B : IBinReader](Self[T, B], default~ : Double = ..) -> Double
+  as_int[T : IString + Hash + Eq, B : IBinReader](Self[T, B], default~ : Int64 = ..) -> Int64
+  as_str[T : IString + Hash + Eq, B : IBinReader](Self[T, B], default~ : String) -> String
+  as_string[T : IString + Hash + Eq, B : IBinReader](Self[T, B], default~ : T) -> T
+  bool_by_index[T : IString + Hash + Eq, B : IBinReader](Self[T, B], Int, Bool) -> Bool
+  bool_by_key[T : IString + Hash + Eq, B : IBinReader](Self[T, B], T, Bool) -> Bool
+  convert2Array[T : IString + Hash + Eq, B : IBinReader](Self[T, B]) -> Unit
+  convert2IntKV[T : IString + Hash + Eq, B : IBinReader](Self[T, B]) -> Unit
+  convert2KV[T : IString + Hash + Eq, B : IBinReader](Self[T, B]) -> Unit
+  datetime_by_index[T : IString + Hash + Eq, B : IBinReader](Self[T, B], Int, @datetime.DateTime) -> @datetime.DateTime
+  datetime_by_key[T : IString + Hash + Eq, B : IBinReader](Self[T, B], T, @datetime.DateTime) -> @datetime.DateTime
+  double_by_index[T : IString + Hash + Eq, B : IBinReader](Self[T, B], Int, Double) -> Double
+  double_by_key[T : IString + Hash + Eq, B : IBinReader](Self[T, B], T, Double) -> Double
+  int_by_index[T : IString + Hash + Eq, B : IBinReader](Self[T, B], Int, Int64) -> Int64
+  int_by_key[T : IString + Hash + Eq, B : IBinReader](Self[T, B], T, Int64) -> Int64
+  iter[T : IString + Hash + Eq, B : IBinReader](Self[T, B]) -> Iter[Self[T, B]]
+  iter2[T : IString + Hash + Eq, B : IBinReader](Self[T, B]) -> Iter2[T, Self[T, B]]
+  iter_intmap_array[T : IString + Hash + Eq, B : IBinReader](Self[T, B]) -> Iter2[Int64, Self[T, B]]
+  new_array[T : IString + Hash + Eq, B : IBinReader](Array[Self[T, B]]) -> Self[T, B]
+  new_object[T : IString + Hash + Eq, B : IBinReader](Map[T, Self[T, B]]) -> Self[T, B]
+  op_get[T : IString + Hash + Eq, B : IBinReader](Self[T, B], T) -> Self[T, B]?
+  op_set[T : IString + Hash + Eq, B : IBinReader](Self[T, B], T, Self[T, B]) -> Unit
+  parent[T : IString + Hash + Eq, B : IBinReader](Self[T, B]) -> Self[T, B]?
+  set_bool[T : IString + Hash + Eq, B : IBinReader](Self[T, B], Bool) -> Unit
+  set_datetime[T : IString + Hash + Eq, B : IBinReader](Self[T, B], @datetime.DateTime) -> Unit
+  set_double[T : IString + Hash + Eq, B : IBinReader](Self[T, B], Double) -> Unit
+  set_float[T : IString + Hash + Eq, B : IBinReader](Self[T, B], Float) -> Unit
+  set_index_bin[T : IString + Hash + Eq, B : IBinReader](Self[T, B], Int, B) -> Unit
+  set_index_bool[T : IString + Hash + Eq, B : IBinReader](Self[T, B], Int, Bool) -> Unit
+  set_index_date[T : IString + Hash + Eq, B : IBinReader](Self[T, B], Int, @datetime.DateTime) -> Unit
+  set_index_double[T : IString + Hash + Eq, B : IBinReader](Self[T, B], Int, Double) -> Unit
+  set_index_ext[T : IString + Hash + Eq, B : IBinReader](Self[T, B], Int, B, Int) -> Unit
+  set_index_float[T : IString + Hash + Eq, B : IBinReader](Self[T, B], Int, Float) -> Unit
+  set_index_int64[T : IString + Hash + Eq, B : IBinReader](Self[T, B], Int, Int64) -> Unit
+  set_index_share_bin[T : IString + Hash + Eq, B : IBinReader](Self[T, B], Int, BinaryView[B]) -> Unit
+  set_index_share_ext[T : IString + Hash + Eq, B : IBinReader](Self[T, B], Int, BinaryView[B], Int) -> Unit
+  set_index_share_string[T : IString + Hash + Eq, B : IBinReader](Self[T, B], Int, StringView[T, B]) -> Unit
+  set_index_string[T : IString + Hash + Eq, B : IBinReader](Self[T, B], Int, T) -> Unit
+  set_int[T : IString + Hash + Eq, B : IBinReader](Self[T, B], Int64) -> Unit
+  set_intkey_bin[T : IString + Hash + Eq, B : IBinReader](Self[T, B], Int64, B) -> Unit
+  set_intkey_bool[T : IString + Hash + Eq, B : IBinReader](Self[T, B], Int64, Bool) -> Unit
+  set_intkey_datetime[T : IString + Hash + Eq, B : IBinReader](Self[T, B], Int64, @datetime.DateTime) -> Unit
+  set_intkey_double[T : IString + Hash + Eq, B : IBinReader](Self[T, B], Int64, Double) -> Unit
+  set_intkey_ext[T : IString + Hash + Eq, B : IBinReader](Self[T, B], Int64, B, Int) -> Unit
+  set_intkey_float[T : IString + Hash + Eq, B : IBinReader](Self[T, B], Int64, Float) -> Unit
+  set_intkey_int64[T : IString + Hash + Eq, B : IBinReader](Self[T, B], Int64, Int64) -> Unit
+  set_intkey_share_bin[T : IString + Hash + Eq, B : IBinReader](Self[T, B], Int64, BinaryView[B]) -> Unit
+  set_intkey_share_ext[T : IString + Hash + Eq, B : IBinReader](Self[T, B], Int64, BinaryView[B], Int) -> Unit
+  set_intkey_share_string[T : IString + Hash + Eq, B : IBinReader](Self[T, B], Int64, StringView[T, B]) -> Unit
+  set_intkey_string[T : IString + Hash + Eq, B : IBinReader](Self[T, B], Int64, T) -> Unit
+  set_key_bin[T : IString + Hash + Eq, B : IBinReader](Self[T, B], T, B) -> Unit
+  set_key_bool[T : IString + Hash + Eq, B : IBinReader](Self[T, B], T, Bool) -> Unit
+  set_key_datetime[T : IString + Hash + Eq, B : IBinReader](Self[T, B], T, @datetime.DateTime) -> Unit
+  set_key_double[T : IString + Hash + Eq, B : IBinReader](Self[T, B], T, Double) -> Unit
+  set_key_ext[T : IString + Hash + Eq, B : IBinReader](Self[T, B], T, B, Int) -> Unit
+  set_key_float[T : IString + Hash + Eq, B : IBinReader](Self[T, B], T, Float) -> Unit
+  set_key_int[T : IString + Hash + Eq, B : IBinReader](Self[T, B], T, Int) -> Unit
+  set_key_int64[T : IString + Hash + Eq, B : IBinReader](Self[T, B], T, Int64) -> Unit
+  set_key_share_bin[T : IString + Hash + Eq, B : IBinReader](Self[T, B], T, BinaryView[B]) -> Unit
+  set_key_share_ext[T : IString + Hash + Eq, B : IBinReader](Self[T, B], T, BinaryView[B], Int) -> Unit
+  set_key_share_string[T : IString + Hash + Eq, B : IBinReader](Self[T, B], T, StringView[T, B]) -> Unit
+  set_key_string[T : IString + Hash + Eq, B : IBinReader](Self[T, B], T, T) -> Unit
+  set_nil[T : IString + Hash + Eq, B : IBinReader](Self[T, B]) -> Unit
+  set_string[T : IString + Hash + Eq, B : IBinReader](Self[T, B], T) -> Unit
+  str_by_index[T : IString + Hash + Eq, B : IBinReader](Self[T, B], Int, String) -> String
+  str_by_key[T : IString + Hash + Eq, B : IBinReader](Self[T, B], T, String) -> String
+  string_by_index[T : IString + Hash + Eq, B : IBinReader](Self[T, B], Int, T) -> T
+  string_by_key[T : IString + Hash + Eq, B : IBinReader](Self[T, B], T, T) -> T
+  to_string[T : IString + Hash + Eq, B : IBinReader](Self[T, B]) -> String
+  value[T : IString + Hash + Eq, B : IBinReader](Self[T, B]) -> ValueData[T, B]
+  value_by_index[T : IString + Hash + Eq, B : IBinReader](Self[T, B], Int) -> Self[T, B]?
+  value_by_key[T : IString + Hash + Eq, B : IBinReader](Self[T, B], T) -> Self[T, B]?
+}
+
+type MsgPackParser
+impl MsgPackParser {
+  newparser_with_str_array(Bool, Array[Byte]) -> Self[String, Array[Byte]]
+  newparser_with_str_bytes(Bool, Bytes) -> Self[String, Bytes]
+  parse[T : IString + Hash + Eq, B : IBinReader](Self[T, B]) -> MoonValue[T, B]!MsgPackParserError
+}
+
+pub(all) type! MsgPackParserError {
+  InvalidateMsgPackMapType(String)
+  ErrorUtf8String(String)
+  ErrorExtError(String)
+  ErrorKey(String)
+  ErrorIntKey(String)
+}
+
+type MsgpackEncoder
+impl MsgpackEncoder {
+  encode[T : IString + Hash + Eq, B : IBinBlit](Self[B], MoonValue[T, B]) -> Unit
+  new[B : IBinBlit](B) -> Self[B]
+}
+
+type StringView
+impl StringView {
+  newStringView[T : IString + Hash + Eq, B : IBinReader](B, Int, Int, (B, Int, Int) -> T!ConvertError) -> Self[T, B]
+  string[T : IString + Hash + Eq, B : IBinReader](Self[T, B]) -> String
+  value[T : IString + Hash + Eq, B : IBinReader](Self[T, B]) -> T!ConvertError
+}
+impl IString for StringView[String, Bytes]
+
+pub(all) enum ValueData {
+  VT_Null
+  VT_True
+  VT_False
+  VT_Int(Int64)
+  VT_Double(Double)
+  VT_DateTime(@datetime.DateTime)
+  VT_Float(Float)
+  VT_String(T)
+  VT_ShareString(StringView[T, B])
+  VT_Bin(B)
+  VT_ShareBin(BinaryView[B])
+  VT_Ext(B, Int)
+  VT_ShareExt(BinaryView[B], Int)
+  VT_Obj(Map[T, MoonValue[T, B]])
+  VT_Array(Array[MoonValue[T, B]])
+  VT_IntKeyObj(Map[Int64, MoonValue[T, B]])
+}
+
+
+impl IBinReader {
+  op_get(Self, Int) -> Byte
+}
+
+// Type aliases
+
+// Traits
+pub(open) trait IBinBlit : IBinWriter + IBinReader {
+  newBlit() -> Self
+  as_binwriter(Self) -> IBinWriter
+  as_binreader(Self) -> IBinReader
+  blit(Self, Int, Self, Int, Int) -> Unit
+  append_data(Self, Self) -> Unit
+}
+
+pub(open) trait IBinReader : Show {
+  length(Self) -> Int
+  read_byte(Self, Int) -> Byte
+  read_bool(Self, Int) -> Bool
+  read_int16(Self, Int, Bool) -> Int
+  read_int32(Self, Int, Bool) -> Int
+  read_int64(Self, Int, Bool) -> Int64
+  read_float(Self, Int) -> Float
+  read_double(Self, Int) -> Double
+}
+impl IBinReader::read_bool
+impl IBinReader::read_int16
+impl IBinReader::read_int32
+impl IBinReader::read_int64
+impl IBinReader::read_float
+impl IBinReader::read_double
+impl IBinReader for Bytes
+impl IBinReader for Array[Byte]
+
+pub(open) trait IBinWriter {
+  write_byte(Self, Int, Byte) -> Unit
+  write_bool(Self, Int, Bool) -> Unit
+  write_bytes(Self, Int, Bytes) -> Unit
+  write_int16(Self, Int, Int, Bool) -> Unit
+  write_int32(Self, Int, Int, Bool) -> Unit
+  write_int64(Self, Int, Int64, Bool) -> Unit
+  write_double(Self, Int, Double) -> Unit
+  write_float(Self, Int, Float) -> Unit
+  append_byte(Self, Byte) -> Unit
+  append_bool(Self, Bool) -> Unit
+  append_int16(Self, Int, Bool) -> Unit
+  append_int32(Self, Int, Bool) -> Unit
+  append_int64(Self, Int64, Bool) -> Unit
+  append_double(Self, Double) -> Unit
+  append_float(Self, Float) -> Unit
+  write_utf8(Self, IString) -> Unit!ConvertError
+}
+impl IBinWriter::write_bool
+impl IBinWriter::write_bytes
+impl IBinWriter::write_int16
+impl IBinWriter::write_int32
+impl IBinWriter::write_int64
+impl IBinWriter::write_double
+impl IBinWriter::write_float
+impl IBinWriter::append_byte
+impl IBinWriter::append_bool
+impl IBinWriter::append_int16
+impl IBinWriter::append_int32
+impl IBinWriter::append_int64
+impl IBinWriter::append_double
+impl IBinWriter::append_float
+impl IBinWriter::write_utf8
+impl IBinWriter for Bytes
+impl IBinWriter for Array[Byte]
+
+pub(open) trait IString {
+  charCodeAt(Self, Int) -> Int
+  length(Self) -> Int
+  to_string(Self) -> String
+  to_utf8(Self) -> Array[Byte]!ConvertError
+}
+impl IString::to_string
+impl IString::to_utf8
+impl IString for String
+
