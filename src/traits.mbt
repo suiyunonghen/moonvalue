@@ -31,12 +31,12 @@ impl IString with to_utf8(self) -> Array[Byte]!ConvertError {
 }
 
 ///|
-pub impl Eq for IString with op_equal(self, other : IString) -> Bool {
+pub impl Eq for &IString with op_equal(self, other : &IString) -> Bool {
   self.to_string() == other.to_string()
 }
 
 ///|
-pub impl Hash for IString with hash_combine(self, hash : Hasher) -> Unit {
+pub impl Hash for &IString with hash_combine(self, hash : Hasher) -> Unit {
   hash.combine_string(self.to_string())
 }
 
@@ -301,7 +301,7 @@ pub(open) trait IBinReader: Show {
 }
 
 ///|
-pub impl Show for IBinReader with output(self, l : Logger) -> Unit {
+pub impl Show for &IBinReader with output(self, l : &Logger) -> Unit {
   l.write_string("blob[")
   let len = self.length()
   loop 0 {
@@ -380,7 +380,7 @@ impl IBinReader with read_bool(self, offset : Int) -> Bool {
 }
 
 ///|
-pub fn op_get(self : IBinReader, offset : Int) -> Byte {
+pub fn op_get(self : &IBinReader, offset : Int) -> Byte {
   let size = self.length()
   if offset >= size {
     panic()
@@ -405,11 +405,11 @@ pub(open) trait IBinWriter {
   append_int64(Self, Int64, Bool) -> Unit
   append_double(Self, Double) -> Unit
   append_float(Self, Float) -> Unit
-  write_utf8(Self, IString) -> Unit!ConvertError
+  write_utf8(Self, &IString) -> Unit!ConvertError
 }
 
 ///|
-impl IBinWriter with write_utf8(self, str : IString) -> Unit!ConvertError {
+impl IBinWriter with write_utf8(self, str : &IString) -> Unit!ConvertError {
   let len = str.length()
   for i in 0..<len {
     let code = str.charCodeAt(i)
@@ -578,12 +578,12 @@ pub fn BinaryView::newBinaryView[B : IBinReader](
 }
 
 ///|
-pub impl IBinReader for BinaryView[IBinReader] with length(self) -> Int {
+pub impl IBinReader for BinaryView[&IBinReader] with length(self) -> Int {
   self.len
 }
 
 ///|
-pub impl IBinReader for BinaryView[IBinReader] with read_bool(
+pub impl IBinReader for BinaryView[&IBinReader] with read_bool(
   self,
   offset : Int
 ) -> Bool {
@@ -591,7 +591,7 @@ pub impl IBinReader for BinaryView[IBinReader] with read_bool(
 }
 
 ///|
-pub impl IBinReader for BinaryView[IBinReader] with read_byte(
+pub impl IBinReader for BinaryView[&IBinReader] with read_byte(
   self,
   offset : Int
 ) -> Byte {
@@ -713,8 +713,8 @@ pub impl IBinWriter for Array[Byte] with write_byte(
 ///| binary blit
 pub(open) trait IBinBlit: IBinWriter + IBinReader {
   newBlit() -> Self
-  as_binwriter(Self) -> IBinWriter
-  as_binreader(Self) -> IBinReader
+  as_binwriter(Self) -> &IBinWriter
+  as_binreader(Self) -> &IBinReader
   blit(Self, Int, Self, Int, Int) -> Unit
   append_data(Self, Self) -> Unit
 }
@@ -723,10 +723,10 @@ pub(open) trait IBinBlit: IBinWriter + IBinReader {
 impl IBinBlit for Array[Byte] with newBlit() -> Array[Byte] { Array::new() }
 
 ///|
-impl IBinBlit for Array[Byte] with as_binwriter(self) -> IBinWriter { self }
+impl IBinBlit for Array[Byte] with as_binwriter(self) -> &IBinWriter { self }
 
 ///|
-impl IBinBlit for Array[Byte] with as_binreader(self) -> IBinReader { self }
+impl IBinBlit for Array[Byte] with as_binreader(self) -> &IBinReader { self }
 
 ///|
 impl IBinBlit for Array[Byte] with blit(

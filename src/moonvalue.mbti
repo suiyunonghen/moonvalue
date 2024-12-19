@@ -23,7 +23,7 @@ impl BinaryView {
   newBinaryView[B : IBinReader](B, Int, Int) -> Self[B]
 }
 impl[B : Show] Show for BinaryView[B]
-impl IBinReader for BinaryView[IBinReader]
+impl IBinReader for BinaryView[&IBinReader]
 
 type BsonParser
 impl BsonParser {
@@ -193,7 +193,7 @@ pub(all) enum ValueData {
 
 
 impl IBinReader {
-  op_get(Self, Int) -> Byte
+  op_get(&Self, Int) -> Byte
 }
 
 // Type aliases
@@ -201,8 +201,8 @@ impl IBinReader {
 // Traits
 pub(open) trait IBinBlit : IBinWriter + IBinReader {
   newBlit() -> Self
-  as_binwriter(Self) -> IBinWriter
-  as_binreader(Self) -> IBinReader
+  as_binwriter(Self) -> &IBinWriter
+  as_binreader(Self) -> &IBinReader
   blit(Self, Int, Self, Int, Int) -> Unit
   append_data(Self, Self) -> Unit
 }
@@ -242,7 +242,7 @@ pub(open) trait IBinWriter {
   append_int64(Self, Int64, Bool) -> Unit
   append_double(Self, Double) -> Unit
   append_float(Self, Float) -> Unit
-  write_utf8(Self, IString) -> Unit!ConvertError
+  write_utf8(Self, &IString) -> Unit!ConvertError
 }
 impl IBinWriter::write_bool
 impl IBinWriter::write_bytes

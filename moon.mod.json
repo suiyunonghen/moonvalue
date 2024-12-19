@@ -1,8 +1,8 @@
 {
   "name": "suiyunonghen/moonvalue",
-  "version": "0.1.10",
+  "version": "0.1.12",
   "deps": {
-    "suiyunonghen/datetime": "0.1.4"
+    "suiyunonghen/datetime": "0.1.5"
   },
   "readme": "README.md",
   "repository": "https://github.com/suiyunonghen/moonvalue",
