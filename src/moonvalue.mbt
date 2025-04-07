@@ -463,7 +463,7 @@ pub fn op_set[T : IString + Hash + Eq, B : IBinReader](
 }
 
 ///|
-pub fn op_get[T : IString + Hash + Eq, B : IBinReader](
+pub fn MoonValue::op_get[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B],
   key : T
 ) -> MoonValue[T, B]? {
@@ -1518,10 +1518,10 @@ pub fn to_string[T : IString + Hash + Eq, B : IBinReader](
         } else {
           builder.write_char(',')
         }
-        builder.write_string("\n\{childSpace}\{k}:")
+        builder.write_string("\n\{childSpace}\{k.to_string()}:")        
         match v.data {
-          VT_String(value=str) => builder.write_string(" \"\{str}\"")
-          _ => builder.write_string("\{v}")
+          VT_String(value=str) => builder.write_string(" \"\{str.to_string()}\"")
+          _ => builder.write_string("\{v.to_string()}")
         }
       }
       builder.write_string("\n\{space}}")
@@ -1537,7 +1537,7 @@ pub fn to_string[T : IString + Hash + Eq, B : IBinReader](
         } else {
           builder.write_char(',')
         }
-        builder.write_string("\{v}")
+        builder.write_string("\{v.to_string()}")
       }
       builder.write_char(']')
       builder.to_string()
@@ -1560,8 +1560,8 @@ pub fn to_string[T : IString + Hash + Eq, B : IBinReader](
         }
         builder.write_string("\n\{childSpace}\{k}:")
         match v.data {
-          VT_String(value=str) => builder.write_string(" \"\{str}\"")
-          _ => builder.write_string("\{v}")
+          VT_String(value=str) => builder.write_string(" \"\{str.to_string()}\"")
+          _ => builder.write_string("\{v.to_string()}")
         }
       }
       builder.write_string("\n\{space}}")
@@ -1667,9 +1667,9 @@ pub fn iter_intmap_array[T : IString + Hash + Eq, B : IBinReader](
 }
 
 test "iter" {
-  let v : MoonValue[String, Bytes] = new_object({})
+  let v : MoonValue[String, Bytes] = MoonValue::new_object({})
   v.set_key_string("name", "dxsoft")
-  let child = new_object({})
+  let child = MoonValue::new_object({})
   child.set_key_string("name", "child1")
   let cc = child.add_key_object("children", StrMap)
   cc.set_key_int("age", 32)

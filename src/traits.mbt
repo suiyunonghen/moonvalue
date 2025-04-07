@@ -6,6 +6,14 @@ pub(open) trait IString {
   to_utf8(Self) -> Array[Byte]!ConvertError
 }
 
+pub impl Show for &IString with output(self, l: &Logger) -> Unit{
+  l.write_string(IString::to_string(self))
+}
+
+pub impl Show for &IString with to_string(self) -> String{
+  IString::to_string(self)
+}
+
 ///|
 impl IString with to_utf8(self) -> Array[Byte]!ConvertError {
   let result = Array::new()
@@ -81,8 +89,8 @@ pub fn LittleEndian::uint16(bytes : ArrayView[Byte]) -> UInt {
 }
 
 ///|
-pub fn LittleEndian::uint16Bytes(v : UInt) -> Bytes {
-  let result = Bytes::make(2, 0)
+pub fn LittleEndian::uint16Bytes(v : UInt) -> FixedArray[Byte] {
+  let result = FixedArray::make(2,b'\x00')
   result[0] = v.to_byte()
   result[1] = (v >> 8).to_byte()
   result
@@ -107,8 +115,8 @@ pub fn LittleEndian::uint32(bytes : ArrayView[Byte]) -> UInt {
 }
 
 ///|
-pub fn LittleEndian::uint32Bytes(v : UInt) -> Bytes {
-  let result = Bytes::make(4, 0)
+pub fn LittleEndian::uint32Bytes(v : UInt) -> FixedArray[Byte] {
+  let result = FixedArray::make(4, b'\x00')
   result[0] = v.to_byte()
   result[1] = (v >> 8).to_byte()
   result[2] = (v >> 16).to_byte()
@@ -165,8 +173,8 @@ pub fn LittleEndian::uint64(bytes : ArrayView[Byte]) -> UInt64 {
 }
 
 ///|
-pub fn LittleEndian::uint64Bytes(v : UInt64) -> Bytes {
-  let result = Bytes::make(8, 0)
+pub fn LittleEndian::uint64Bytes(v : UInt64) -> FixedArray[Byte] {
+  let result = FixedArray::make(8, b'\x00')
   result[0] = v.to_byte()
   result[1] = (v >> 8).to_byte()
   result[2] = (v >> 16).to_byte()
@@ -191,8 +199,8 @@ pub fn BigEndian::uint16(bytes : ArrayView[Byte]) -> UInt {
 }
 
 ///|
-pub fn BigEndian::uint16Bytes(v : UInt) -> Bytes {
-  let result = Bytes::make(2, 0)
+pub fn BigEndian::uint16Bytes(v : UInt) -> FixedArray[Byte] {
+  let result = FixedArray::make(2, b'\x00')
   result[0] = (v >> 8).to_byte()
   result[1] = v.to_byte()
   result
@@ -217,8 +225,8 @@ pub fn BigEndian::uint32(bytes : ArrayView[Byte]) -> UInt {
 }
 
 ///|
-pub fn BigEndian::uint32Bytes(v : UInt) -> Bytes {
-  let result = Bytes::make(4, 0)
+pub fn BigEndian::uint32Bytes(v : UInt) -> FixedArray[Byte] {
+  let result = FixedArray::make(4, b'\x00')
   result[0] = (v >> 24).to_byte()
   result[1] = (v >> 16).to_byte()
   result[2] = (v >> 8).to_byte()
@@ -275,8 +283,8 @@ pub fn BigEndian::uint64(bytes : ArrayView[Byte]) -> UInt64 {
 }
 
 ///|
-pub fn BigEndian::uint64Bytes(v : UInt64) -> Bytes {
-  let result = Bytes::make(8, 0)
+pub fn BigEndian::uint64Bytes(v : UInt64) -> FixedArray[Byte] {
+  let result = FixedArray::make(8, b'\x00')
   result[0] = (v >> 56).to_byte()
   result[1] = (v >> 48).to_byte()
   result[2] = (v >> 40).to_byte()
@@ -392,7 +400,7 @@ pub fn op_get(self : &IBinReader, offset : Int) -> Byte {
 pub(open) trait IBinWriter {
   write_byte(Self, Int, Byte) -> Unit
   write_bool(Self, Int, Bool) -> Unit
-  write_bytes(Self, Int, Bytes) -> Unit
+  write_bytes(Self, Int, FixedArray[Byte]) -> Unit
   write_int16(Self, Int, Int, Bool) -> Unit
   write_int32(Self, Int, Int, Bool) -> Unit
   write_int64(Self, Int, Int64, Bool) -> Unit
@@ -454,7 +462,7 @@ impl IBinWriter with write_bool(self, offset : Int, value : Bool) -> Unit {
 }
 
 ///|
-impl IBinWriter with write_bytes(self, offset : Int, b : Bytes) -> Unit {
+impl IBinWriter with write_bytes(self, offset : Int, b : FixedArray[Byte]) -> Unit {
   if offset < 0 {
     for v in b {
       self.write_byte(-1, v)
@@ -557,7 +565,7 @@ pub impl IBinReader for Bytes with read_byte(self, offset : Int) -> Byte {
 }
 
 ///|
-pub impl IBinWriter for Bytes with write_byte(self, offset : Int, value : Byte) -> Unit {
+pub impl IBinWriter for FixedArray[Byte] with write_byte(self, offset : Int, value : Byte) -> Unit {
   self[offset] = value
 }
 
@@ -605,7 +613,7 @@ struct StringView[T, B] {
   len : Int
   stringReader : (B, Int, Int) -> T!ConvertError
   mut _str : T?
-}
+}derive(Show)
 
 ///|
 pub fn StringView::newStringView[T : IString + Hash + Eq, B : IBinReader](
@@ -618,7 +626,7 @@ pub fn StringView::newStringView[T : IString + Hash + Eq, B : IBinReader](
 }
 
 ///|
-pub fn value[T : IString + Hash + Eq, B : IBinReader](
+pub fn StringView::value[T : IString + Hash + Eq, B : IBinReader](
   self : StringView[T, B]
 ) -> T!ConvertError {
   match self._str {

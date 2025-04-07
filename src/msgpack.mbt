@@ -211,14 +211,14 @@ fn parse_double[T : IString + Hash + Eq, B : IBinReader](
 }
 
 ///| parse msgpack
-pub fn parse[T : IString + Hash + Eq, B : IBinReader](
+pub fn MsgPackParser::parse[T : IString + Hash + Eq, B : IBinReader](
   self : MsgPackParser[T, B]
 ) -> MoonValue[T, B]!MsgPackParserError {
   self.parse_value!(self.detectionFmtCode(), None, KeyInfo::NoKey_or_Array)
 }
 
 ///|
-enum KeyInfo[T] {
+priv enum KeyInfo[T] {
   NoKey_or_Array
   Str(T)
   IntKey(Int64)
@@ -277,7 +277,7 @@ fn parse_intKey[T : IString + Hash + Eq, B : IBinReader](
 }
 
 ///|
-fn parse_value[T : IString + Hash + Eq, B : IBinReader](
+fn MsgPackParser::parse_value[T : IString + Hash + Eq, B : IBinReader](
   self : MsgPackParser[T, B],
   fmtCode : MsgPackFormatCode,
   parent : MoonValue[T, B]?,
@@ -379,7 +379,7 @@ fn parse_value[T : IString + Hash + Eq, B : IBinReader](
     | FmtCodeStr32(len=strLen) => {
       let strLen = strLen.reinterpret_as_int()
       if self.shareBinary {
-        let view : StringView[T, B] = newStringView(
+        let view : StringView[T, B] = StringView::newStringView(
           self._packData,
           self._offset,
           strLen,
@@ -511,7 +511,7 @@ fn parse_value[T : IString + Hash + Eq, B : IBinReader](
         let nsec = self.parse_u32() //纳秒
         let sec = self.parse_u64()
         let ms = (sec * 1000 + (nsec / 1000000).to_uint64()).reinterpret_as_int64()
-        let date = @datetime.from_unix_mseconds(ms)
+        let date = @datetime.DateTime::from_unix_mseconds(ms)
         match parent {
           Some(p) =>
             match key {
@@ -595,7 +595,7 @@ fn parse_value[T : IString + Hash + Eq, B : IBinReader](
       if extype == -1 {
         //32位时间,就是Unix 1970-1-1经过的秒数
         let sec = self.parse_u32()
-        let date = @datetime.from_unix_mseconds(sec.to_int64() * 1000)
+        let date = @datetime.DateTime::from_unix_mseconds(sec.to_int64() * 1000)
         match parent {
           Some(p) =>
             match key {
@@ -616,7 +616,7 @@ fn parse_value[T : IString + Hash + Eq, B : IBinReader](
         let nsec = sec >> 34 //纳秒
         sec = sec & 0x00000003ffffffff //秒
         let ms = (sec * 1000 + nsec / 1000000).reinterpret_as_int64()
-        let date = @datetime.from_unix_mseconds(ms)
+        let date = @datetime.DateTime::from_unix_mseconds(ms)
         match parent {
           Some(p) =>
             match key {
@@ -643,7 +643,7 @@ fn parse_ext[T : IString + Hash + Eq, B : IBinReader](
   binLen : Int
 ) -> MoonValue[T, B] {
   if self.shareBinary {
-    let bin = newBinaryView(self._packData, self._offset, binLen)
+    let bin = BinaryView::newBinaryView(self._packData, self._offset, binLen)
     match parent {
       Some(p) =>
         match key {
@@ -728,9 +728,9 @@ pub fn MsgPackParser::newparser_with_str_array(
 
 ///|
 fn bytesReader(bin : Bytes, offset : Int, binLen : Int) -> Bytes {
-  let result = Bytes::new(binLen)
-  result.blit(0, bin, offset, binLen)
-  result
+  let fixArray = FixedArray::make(binLen,b'\x00')
+  FixedArray::blit_from_bytes(fixArray,0,bin,offset,binLen)
+  Bytes::from_fixedarray(fixArray)
 }
 
 ///|
