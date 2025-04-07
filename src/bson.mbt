@@ -593,6 +593,7 @@ pub fn BsonParser::newparser_with_str_bytes(
   }
 }
 
+///|
 test "parse_bson" {
   // let arr : Array[Byte] = [
   //   139, 0, 0, 0, 16, 49, 0, 255, 255, 255, 255, 1, 100, 111, 117, 98, 108, 101,

@@ -75,6 +75,7 @@ pub fn utf8_utf16(utf8Arr : ArrayView[Byte]) -> String!ConvertError {
   String::from_array(strArr)
 }
 
+///|
 test "utft8" {
   let arr = utf16_utf8?("不得闲测试").unwrap()
   println(arr)

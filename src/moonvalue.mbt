@@ -1518,9 +1518,10 @@ pub fn to_string[T : IString + Hash + Eq, B : IBinReader](
         } else {
           builder.write_char(',')
         }
-        builder.write_string("\n\{childSpace}\{k.to_string()}:")        
+        builder.write_string("\n\{childSpace}\{k.to_string()}:")
         match v.data {
-          VT_String(value=str) => builder.write_string(" \"\{str.to_string()}\"")
+          VT_String(value=str) =>
+            builder.write_string(" \"\{str.to_string()}\"")
           _ => builder.write_string("\{v.to_string()}")
         }
       }
@@ -1560,7 +1561,8 @@ pub fn to_string[T : IString + Hash + Eq, B : IBinReader](
         }
         builder.write_string("\n\{childSpace}\{k}:")
         match v.data {
-          VT_String(value=str) => builder.write_string(" \"\{str.to_string()}\"")
+          VT_String(value=str) =>
+            builder.write_string(" \"\{str.to_string()}\"")
           _ => builder.write_string("\{v.to_string()}")
         }
       }
@@ -1575,40 +1577,38 @@ pub fn to_string[T : IString + Hash + Eq, B : IBinReader](
 pub fn iter[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B]
 ) -> Iter[MoonValue[T, B]] {
-  Iter::new(
-    fn(yieldfn) {
-      match self.data {
-        VT_Obj(value=map) => {
-          for _, v in map {
-            match yieldfn(v) {
-              IterEnd => return IterEnd
-              _ => continue
-            }
+  Iter::new(fn(yieldfn) {
+    match self.data {
+      VT_Obj(value=map) => {
+        for _, v in map {
+          match yieldfn(v) {
+            IterEnd => return IterEnd
+            _ => continue
           }
-          IterEnd
         }
-        VT_IntKeyObj(value=map) => {
-          for _, v in map {
-            match yieldfn(v) {
-              IterEnd => return IterEnd
-              _ => continue
-            }
-          }
-          IterEnd
-        }
-        VT_Array(value=arr) => {
-          for _, v in arr {
-            match yieldfn(v) {
-              IterEnd => return IterEnd
-              _ => continue
-            }
-          }
-          IterEnd
-        }
-        _ => IterEnd
+        IterEnd
       }
-    },
-  )
+      VT_IntKeyObj(value=map) => {
+        for _, v in map {
+          match yieldfn(v) {
+            IterEnd => return IterEnd
+            _ => continue
+          }
+        }
+        IterEnd
+      }
+      VT_Array(value=arr) => {
+        for _, v in arr {
+          match yieldfn(v) {
+            IterEnd => return IterEnd
+            _ => continue
+          }
+        }
+        IterEnd
+      }
+      _ => IterEnd
+    }
+  })
 }
 
 ///|
@@ -1616,22 +1616,20 @@ pub fn iter[T : IString + Hash + Eq, B : IBinReader](
 pub fn iter2[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B]
 ) -> Iter2[T, MoonValue[T, B]] {
-  Iter2::new(
-    fn(yieldfn) {
-      match self.data {
-        VT_Obj(value=map) => {
-          for k, v in map {
-            match yieldfn(k, v) {
-              IterEnd => return IterEnd
-              _ => continue
-            }
+  Iter2::new(fn(yieldfn) {
+    match self.data {
+      VT_Obj(value=map) => {
+        for k, v in map {
+          match yieldfn(k, v) {
+            IterEnd => return IterEnd
+            _ => continue
           }
-          IterEnd
         }
-        _ => IterEnd
+        IterEnd
       }
-    },
-  )
+      _ => IterEnd
+    }
+  })
 }
 
 ///|
@@ -1639,33 +1637,32 @@ pub fn iter2[T : IString + Hash + Eq, B : IBinReader](
 pub fn iter_intmap_array[T : IString + Hash + Eq, B : IBinReader](
   self : MoonValue[T, B]
 ) -> Iter2[Int64, MoonValue[T, B]] {
-  Iter2::new(
-    fn(yieldfn) {
-      match self.data {
-        VT_IntKeyObj(value=map) => {
-          for k, v in map {
-            match yieldfn(k, v) {
-              IterEnd => return IterEnd
-              _ => continue
-            }
+  Iter2::new(fn(yieldfn) {
+    match self.data {
+      VT_IntKeyObj(value=map) => {
+        for k, v in map {
+          match yieldfn(k, v) {
+            IterEnd => return IterEnd
+            _ => continue
           }
-          IterEnd
         }
-        VT_Array(value=arr) => {
-          for idx, v in arr {
-            match yieldfn(idx.to_int64(), v) {
-              IterEnd => return IterEnd
-              _ => continue
-            }
-          }
-          IterEnd
-        }
-        _ => IterEnd
+        IterEnd
       }
-    },
-  )
+      VT_Array(value=arr) => {
+        for idx, v in arr {
+          match yieldfn(idx.to_int64(), v) {
+            IterEnd => return IterEnd
+            _ => continue
+          }
+        }
+        IterEnd
+      }
+      _ => IterEnd
+    }
+  })
 }
 
+///|
 test "iter" {
   let v : MoonValue[String, Bytes] = MoonValue::new_object({})
   v.set_key_string("name", "dxsoft")

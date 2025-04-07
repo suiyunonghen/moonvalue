@@ -728,8 +728,8 @@ pub fn MsgPackParser::newparser_with_str_array(
 
 ///|
 fn bytesReader(bin : Bytes, offset : Int, binLen : Int) -> Bytes {
-  let fixArray = FixedArray::make(binLen,b'\x00')
-  FixedArray::blit_from_bytes(fixArray,0,bin,offset,binLen)
+  let fixArray = FixedArray::make(binLen, b'\x00')
+  FixedArray::blit_from_bytes(fixArray, 0, bin, offset, binLen)
   Bytes::from_fixedarray(fixArray)
 }
 
@@ -1112,6 +1112,7 @@ pub fn encode[T : IString + Hash + Eq, B : IBinBlit](
   }
 }
 
+///|
 test "parse" {
   let b : Array[Byte] = [
     134, 164, 110, 97, 109, 101, 169, 228, 184, 141, 229, 190, 151, 233, 151, 178,

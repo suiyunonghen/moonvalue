@@ -6,11 +6,13 @@ pub(open) trait IString {
   to_utf8(Self) -> Array[Byte]!ConvertError
 }
 
-pub impl Show for &IString with output(self, l: &Logger) -> Unit{
+///|
+pub impl Show for &IString with output(self, l : &Logger) -> Unit {
   l.write_string(IString::to_string(self))
 }
 
-pub impl Show for &IString with to_string(self) -> String{
+///|
+pub impl Show for &IString with to_string(self) -> String {
   IString::to_string(self)
 }
 
@@ -71,10 +73,14 @@ pub impl IString for String with charCodeAt(self, idx : Int) -> Int {
 }
 
 ///|
-pub impl IString for String with length(self) -> Int { self.length() }
+pub impl IString for String with length(self) -> Int {
+  self.length()
+}
 
 ///|
-pub impl IString for String with to_string(self) -> String { self }
+pub impl IString for String with to_string(self) -> String {
+  self
+}
 
 ///|
 type LittleEndian
@@ -90,7 +96,7 @@ pub fn LittleEndian::uint16(bytes : ArrayView[Byte]) -> UInt {
 
 ///|
 pub fn LittleEndian::uint16Bytes(v : UInt) -> FixedArray[Byte] {
-  let result = FixedArray::make(2,b'\x00')
+  let result = FixedArray::make(2, b'\x00')
   result[0] = v.to_byte()
   result[1] = (v >> 8).to_byte()
   result
@@ -557,7 +563,9 @@ impl IBinWriter with write_float(self, offset : Int, v : Float) -> Unit {
 }
 
 ///|
-pub impl IBinReader for Bytes with length(self) -> Int { self.length() }
+pub impl IBinReader for Bytes with length(self) -> Int {
+  self.length()
+}
 
 ///|
 pub impl IBinReader for Bytes with read_byte(self, offset : Int) -> Byte {
@@ -565,7 +573,11 @@ pub impl IBinReader for Bytes with read_byte(self, offset : Int) -> Byte {
 }
 
 ///|
-pub impl IBinWriter for FixedArray[Byte] with write_byte(self, offset : Int, value : Byte) -> Unit {
+pub impl IBinWriter for FixedArray[Byte] with write_byte(
+  self,
+  offset : Int,
+  value : Byte
+) -> Unit {
   self[offset] = value
 }
 
@@ -613,7 +625,7 @@ struct StringView[T, B] {
   len : Int
   stringReader : (B, Int, Int) -> T!ConvertError
   mut _str : T?
-}derive(Show)
+} derive(Show)
 
 ///|
 pub fn StringView::newStringView[T : IString + Hash + Eq, B : IBinReader](
@@ -698,7 +710,9 @@ pub impl IString for StringView[String, Bytes] with to_string(self) -> String {
 }
 
 ///|
-pub impl IBinReader for Array[Byte] with length(self) -> Int { self.length() }
+pub impl IBinReader for Array[Byte] with length(self) -> Int {
+  self.length()
+}
 
 ///|
 pub impl IBinReader for Array[Byte] with read_byte(self, offset : Int) -> Byte {
@@ -728,13 +742,19 @@ pub(open) trait IBinBlit: IBinWriter + IBinReader {
 }
 
 ///|
-impl IBinBlit for Array[Byte] with newBlit() -> Array[Byte] { Array::new() }
+impl IBinBlit for Array[Byte] with newBlit() -> Array[Byte] {
+  Array::new()
+}
 
 ///|
-impl IBinBlit for Array[Byte] with as_binwriter(self) -> &IBinWriter { self }
+impl IBinBlit for Array[Byte] with as_binwriter(self) -> &IBinWriter {
+  self
+}
 
 ///|
-impl IBinBlit for Array[Byte] with as_binreader(self) -> &IBinReader { self }
+impl IBinBlit for Array[Byte] with as_binreader(self) -> &IBinReader {
+  self
+}
 
 ///|
 impl IBinBlit for Array[Byte] with blit(
