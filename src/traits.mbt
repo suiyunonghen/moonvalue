@@ -2,8 +2,8 @@
 pub(open) trait IString {
   charCodeAt(Self, Int) -> Int //utf16编码格式的
   length(Self) -> Int
-  to_string(Self) -> String
-  to_utf8(Self) -> Array[Byte]!ConvertError
+  to_string(Self) -> String = _
+  to_utf8(Self) -> Array[Byte]!ConvertError = _
 }
 
 ///|
@@ -306,12 +306,12 @@ pub fn BigEndian::uint64Bytes(v : UInt64) -> FixedArray[Byte] {
 pub(open) trait IBinReader: Show {
   length(Self) -> Int
   read_byte(Self, Int) -> Byte
-  read_bool(Self, Int) -> Bool
-  read_int16(Self, Int, Bool) -> Int
-  read_int32(Self, Int, Bool) -> Int
-  read_int64(Self, Int, Bool) -> Int64
-  read_float(Self, Int) -> Float
-  read_double(Self, Int) -> Double
+  read_bool(Self, Int) -> Bool = _
+  read_int16(Self, Int, Bool) -> Int = _
+  read_int32(Self, Int, Bool) -> Int = _
+  read_int64(Self, Int, Bool) -> Int64 = _
+  read_float(Self, Int) -> Float = _
+  read_double(Self, Int) -> Double = _
 }
 
 ///|
@@ -405,21 +405,21 @@ pub fn op_get(self : &IBinReader, offset : Int) -> Byte {
 ///| binary writer
 pub(open) trait IBinWriter {
   write_byte(Self, Int, Byte) -> Unit
-  write_bool(Self, Int, Bool) -> Unit
-  write_bytes(Self, Int, FixedArray[Byte]) -> Unit
-  write_int16(Self, Int, Int, Bool) -> Unit
-  write_int32(Self, Int, Int, Bool) -> Unit
-  write_int64(Self, Int, Int64, Bool) -> Unit
-  write_double(Self, Int, Double) -> Unit
-  write_float(Self, Int, Float) -> Unit
-  append_byte(Self, Byte) -> Unit
-  append_bool(Self, Bool) -> Unit
-  append_int16(Self, Int, Bool) -> Unit
-  append_int32(Self, Int, Bool) -> Unit
-  append_int64(Self, Int64, Bool) -> Unit
-  append_double(Self, Double) -> Unit
-  append_float(Self, Float) -> Unit
-  write_utf8(Self, &IString) -> Unit!ConvertError
+  write_bool(Self, Int, Bool) -> Unit = _
+  write_bytes(Self, Int, FixedArray[Byte]) -> Unit = _
+  write_int16(Self, Int, Int, Bool) -> Unit = _
+  write_int32(Self, Int, Int, Bool) -> Unit = _
+  write_int64(Self, Int, Int64, Bool) -> Unit = _
+  write_double(Self, Int, Double) -> Unit = _
+  write_float(Self, Int, Float) -> Unit = _
+  append_byte(Self, Byte) -> Unit = _
+  append_bool(Self, Bool) -> Unit = _
+  append_int16(Self, Int, Bool) -> Unit = _
+  append_int32(Self, Int, Bool) -> Unit = _
+  append_int64(Self, Int64, Bool) -> Unit = _
+  append_double(Self, Double) -> Unit = _
+  append_float(Self, Float) -> Unit = _
+  write_utf8(Self, &IString) -> Unit!ConvertError = _
 }
 
 ///|

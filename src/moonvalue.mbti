@@ -371,65 +371,42 @@ pub(open) trait IBinBlit : IBinWriter + IBinReader {
 pub(open) trait IBinReader : Show {
   length(Self) -> Int
   read_byte(Self, Int) -> Byte
-  read_bool(Self, Int) -> Bool
-  read_int16(Self, Int, Bool) -> Int
-  read_int32(Self, Int, Bool) -> Int
-  read_int64(Self, Int, Bool) -> Int64
-  read_float(Self, Int) -> Float
-  read_double(Self, Int) -> Double
+  read_bool(Self, Int) -> Bool = _
+  read_int16(Self, Int, Bool) -> Int = _
+  read_int32(Self, Int, Bool) -> Int = _
+  read_int64(Self, Int, Bool) -> Int64 = _
+  read_float(Self, Int) -> Float = _
+  read_double(Self, Int) -> Double = _
 }
-impl IBinReader::read_bool
-impl IBinReader::read_double
-impl IBinReader::read_float
-impl IBinReader::read_int16
-impl IBinReader::read_int32
-impl IBinReader::read_int64
 impl IBinReader for Bytes
 impl IBinReader for Array[Byte]
 
 pub(open) trait IBinWriter {
   write_byte(Self, Int, Byte) -> Unit
-  write_bool(Self, Int, Bool) -> Unit
-  write_bytes(Self, Int, FixedArray[Byte]) -> Unit
-  write_int16(Self, Int, Int, Bool) -> Unit
-  write_int32(Self, Int, Int, Bool) -> Unit
-  write_int64(Self, Int, Int64, Bool) -> Unit
-  write_double(Self, Int, Double) -> Unit
-  write_float(Self, Int, Float) -> Unit
-  append_byte(Self, Byte) -> Unit
-  append_bool(Self, Bool) -> Unit
-  append_int16(Self, Int, Bool) -> Unit
-  append_int32(Self, Int, Bool) -> Unit
-  append_int64(Self, Int64, Bool) -> Unit
-  append_double(Self, Double) -> Unit
-  append_float(Self, Float) -> Unit
-  write_utf8(Self, &IString) -> Unit!ConvertError
+  write_bool(Self, Int, Bool) -> Unit = _
+  write_bytes(Self, Int, FixedArray[Byte]) -> Unit = _
+  write_int16(Self, Int, Int, Bool) -> Unit = _
+  write_int32(Self, Int, Int, Bool) -> Unit = _
+  write_int64(Self, Int, Int64, Bool) -> Unit = _
+  write_double(Self, Int, Double) -> Unit = _
+  write_float(Self, Int, Float) -> Unit = _
+  append_byte(Self, Byte) -> Unit = _
+  append_bool(Self, Bool) -> Unit = _
+  append_int16(Self, Int, Bool) -> Unit = _
+  append_int32(Self, Int, Bool) -> Unit = _
+  append_int64(Self, Int64, Bool) -> Unit = _
+  append_double(Self, Double) -> Unit = _
+  append_float(Self, Float) -> Unit = _
+  write_utf8(Self, &IString) -> Unit!ConvertError = _
 }
-impl IBinWriter::append_bool
-impl IBinWriter::append_byte
-impl IBinWriter::append_double
-impl IBinWriter::append_float
-impl IBinWriter::append_int16
-impl IBinWriter::append_int32
-impl IBinWriter::append_int64
-impl IBinWriter::write_bool
-impl IBinWriter::write_bytes
-impl IBinWriter::write_double
-impl IBinWriter::write_float
-impl IBinWriter::write_int16
-impl IBinWriter::write_int32
-impl IBinWriter::write_int64
-impl IBinWriter::write_utf8
 impl IBinWriter for FixedArray[Byte]
 impl IBinWriter for Array[Byte]
 
 pub(open) trait IString {
   charCodeAt(Self, Int) -> Int
   length(Self) -> Int
-  to_string(Self) -> String
-  to_utf8(Self) -> Array[Byte]!ConvertError
+  to_string(Self) -> String = _
+  to_utf8(Self) -> Array[Byte]!ConvertError = _
 }
-impl IString::to_string
-impl IString::to_utf8
 impl IString for String
 
